@@ -35,7 +35,17 @@ export class WebSocketBroker {
       };
       this.clients.add(subscription);
 
+      // Get remote IP address
+      const ip = (ws as any)._socket?.remoteAddress || "unknown";
+      const port = (ws as any)._socket?.remotePort || "unknown";
+      console.log(`🔌 Client connected from ${ip}:${port}`);
+
       ws.on("message", (data: RawData) => {
+        console.log(
+          `📨 Message received from client [${ip}:${port}]: `,
+          data.toString()
+        );
+
         try {
           const { action, topic, message } = JSON.parse(data.toString());
           // console.log("received", action, topic, message);

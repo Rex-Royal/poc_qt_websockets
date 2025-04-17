@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { WebSocketBroker } from "app/libs/websocket/WebSocketBroker";
 
+const WS_DOMAIN = "localhost";
 const WS_PORT = 3002;
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   return new NextResponse(
     JSON.stringify({
       message: "WebSocket server running",
-      url: `ws://localhost:${WS_PORT}`,
+      url: `ws://${WS_DOMAIN}:${WS_PORT}`,
     }),
     { status: 200 }
   );
