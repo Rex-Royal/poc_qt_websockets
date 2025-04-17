@@ -1,4 +1,4 @@
-export enum WebSocketTopics {
+export enum WebSocketTopic {
   CHAT = "chat",
   COUNTER = "counter",
 }

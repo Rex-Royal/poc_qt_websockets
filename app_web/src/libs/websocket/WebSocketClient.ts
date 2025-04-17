@@ -1,4 +1,5 @@
 import { WebsocketActions } from "./WebSocketActions";
+import { WebSocket_API } from "./WebSocketConf";
 
 type MessageHandler = (message: string) => void;
 
@@ -18,7 +19,7 @@ export class WebSocketClient {
     this.url = url;
   }
 
-  static getInstance(url: string = "/api/websocket"): WebSocketClient {
+  static getInstance(url: string = WebSocket_API): WebSocketClient {
     if (!WebSocketClient.instance) {
       WebSocketClient.instance = new WebSocketClient(url);
     }

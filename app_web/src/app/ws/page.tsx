@@ -1,7 +1,7 @@
 "use client";
 
 import { WebSocketClient } from "app/libs/websocket/WebSocketClient";
-import { WebSocketTopics } from "app/libs/websocket/WebSocketTopics";
+import { WebSocketTopic } from "app/libs/websocket/WebSocketTopic";
 import { useEffect, useState } from "react";
 import { RequestBuilder } from "ts-request-builder";
 
@@ -40,16 +40,16 @@ export default function Home() {
 
   useEffect(() => {
     if (ws) {
-      ws.subscribe(WebSocketTopics.CHAT, displayMessage);
+      ws.subscribe(WebSocketTopic.CHAT, displayMessage);
       setTimeout(() => {
         // Send a message (optional test)
-        ws.publish(WebSocketTopics.CHAT, "Yo from client!");
+        ws.publish(WebSocketTopic.CHAT, "Yo from client!");
         setTimeout(() => {
-          ws.unsubscribe(WebSocketTopics.CHAT);
+          ws.unsubscribe(WebSocketTopic.CHAT);
 
-          // ws.subscribe(WebSocketTopics.CHAT, displayMessage);
+          // ws.subscribe(WebSocketTopic.CHAT, displayMessage);
           // Send a message (optional test)
-          ws.publish(WebSocketTopics.CHAT, "Yo from client 2!");
+          ws.publish(WebSocketTopic.CHAT, "Yo from client 2!");
         }, 1000);
       }, 1000);
     }

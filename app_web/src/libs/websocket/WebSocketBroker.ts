@@ -2,7 +2,7 @@
 import { createServer, IncomingMessage, ServerResponse } from "http";
 import { WebSocketServer, WebSocket, RawData } from "ws";
 import { Socket } from "net";
-import { WebSocketTopics } from "./WebSocketTopics";
+import { WebSocketTopics } from "./WebSocketTopic";
 import { WebsocketActions } from "./WebSocketActions";
 
 type Topic = string;

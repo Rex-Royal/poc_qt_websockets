@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useWebSocket } from "app/libs/websocket/useWebSocket";
+import { WebSocketTopic } from "app/libs/websocket/WebSocketTopic";
 
 export default function Counter() {
   const [count, setCount] = useState(0);
@@ -10,7 +11,7 @@ export default function Counter() {
   useEffect(() => {
     ws.connect();
 
-    ws.subscribe("counter", (msg) => {
+    ws.subscribe(WebSocketTopic.COUNTER, (msg) => {
       const parsed = parseInt(msg, 10);
       if (!isNaN(parsed)) setCount(parsed);
     });
@@ -18,7 +19,7 @@ export default function Counter() {
 
   const updateCount = (newCount: number) => {
     setCount(newCount);
-    ws.publish("counter", newCount.toString());
+    ws.publish(WebSocketTopic.COUNTER, newCount.toString());
   };
 
   return (
