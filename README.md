@@ -10,9 +10,13 @@ The QT Proof of Concept to showcase how to communicate publish/subscribe to WS.
 
 ```bash
 app_qt/
-├── CMakeLists.txt
-├── main.cpp
-└── main.qml
+├── CMakeLists.txt        # CMake build configuration file
+├── compile.sh            # Compile script
+├── conanfile.txt         # Conan dependency configuration
+├── install.sh            # Install script
+├── main.cpp              # Main C++ source file
+├── main.qml              # QML user interface file
+└── resources.qrc         # Qt resource collection file
 ```
 
 #### QT Installation & Running
@@ -27,9 +31,13 @@ The Web Server to showcase how to communicate publish/subscribe to WS.
 
 ```bash
 app_web/
-├── TBD
-├── TBD
-└── TBD
+├── public/
+│   └── public files
+├── src/
+│   └── web codebase
+├── package.json
+├── tsconfig.json
+└── ...
 ```
 
 #### WEB Installation & Running
