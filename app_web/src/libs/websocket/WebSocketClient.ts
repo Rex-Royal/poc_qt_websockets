@@ -13,14 +13,16 @@ export class WebSocketClient {
   private url: string;
   private subscriptions: Subscriptions = {};
 
+  private connected: boolean = false;
+
   private reconnectionLogic = () => {};
 
   private constructor(url: string) {
     this.url = url;
   }
 
-  static getInstance(url: string = WebSocket_API): WebSocketClient {
-    if (!WebSocketClient.instance) {
+  static getInstance(url?: string): WebSocketClient {
+    if (!WebSocketClient.instance && url) {
       WebSocketClient.instance = new WebSocketClient(url);
     }
     return WebSocketClient.instance;
@@ -35,6 +37,7 @@ export class WebSocketClient {
 
     this.socket.onopen = () => {
       console.log("✅ WebSocket connected");
+      this.connected = true;
       // Resubscribe to all topics
       Object.keys(this.subscriptions).forEach((topic) => {
         this.send({ action: WebsocketActions.SUBSCRIBE, topic });
@@ -49,6 +52,7 @@ export class WebSocketClient {
 
     this.socket.onclose = () => {
       console.warn("❌ WebSocket closed. Reconnecting in 1s...");
+      this.connected = false;
       this.reconnectionLogic();
       setTimeout(() => this.connect(), 1000); // Optional auto-reconnect
     };
@@ -85,7 +89,16 @@ export class WebSocketClient {
     }
   }
 
+  readyState() {
+    return this.socket?.readyState;
+  }
+
+  isConnected() {
+    return this.connected;
+  }
+
   close() {
+    this.connected = false;
     this.close();
   }
 }

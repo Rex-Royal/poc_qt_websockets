@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useWebSocket } from "app/libs/websocket/useWebSocket";
+import { useCallback, useEffect, useState } from "react";
+
 import { WebSocketTopic } from "app/libs/websocket/WebSocketTopic";
+import { useWebSocket } from "app/libs/websocket/WebSocketContext";
 
 export default function Counter() {
   const [count, setCount] = useState(0);
@@ -9,18 +10,22 @@ export default function Counter() {
   const ws = useWebSocket();
 
   useEffect(() => {
-    ws.connect();
-
-    ws.subscribe(WebSocketTopic.COUNTER, (msg) => {
-      const parsed = parseInt(msg, 10);
-      if (!isNaN(parsed)) setCount(parsed);
+    setTimeout(() => {
+      ws.subscribe(WebSocketTopic.COUNTER, (msg) => {
+        console.log("MSG: ", msg);
+        const parsed = parseInt(msg, 10);
+        if (!isNaN(parsed)) setCount(parsed);
+      });
     });
-  }, []);
+  }, [ws]);
 
-  const updateCount = (newCount: number) => {
-    setCount(newCount);
-    ws.publish(WebSocketTopic.COUNTER, newCount.toString());
-  };
+  const updateCount = useCallback(
+    (newCount: number) => {
+      setCount(newCount);
+      ws.publish(WebSocketTopic.COUNTER, newCount.toString());
+    },
+    [ws, setCount]
+  );
 
   return (
     <div className="p-4 border rounded w-fit bg-white shadow-md space-y-4">

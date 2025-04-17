@@ -38,7 +38,7 @@ export class WebSocketBroker {
       ws.on("message", (data: RawData) => {
         try {
           const { action, topic, message } = JSON.parse(data.toString());
-          console.log("received", action, topic, message);
+          // console.log("received", action, topic, message);
           if (action === WebsocketActions.SUBSCRIBE) {
             subscription.topics.add(topic);
           } else if (action === WebsocketActions.UNSUBSCRIBE) {

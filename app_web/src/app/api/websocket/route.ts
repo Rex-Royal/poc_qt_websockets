@@ -8,6 +8,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   WebSocketBroker.getInstance(WS_PORT);
   WebSocketBroker.getInstance().publish("chat", "Hello from the server!");
 
+  console.log("GET REQUEST TO /api/websocket");
+
   return new NextResponse(
     JSON.stringify({
       message: "WebSocket server running",

@@ -1,37 +1,12 @@
 "use client";
 
-import { WebSocketClient } from "app/libs/websocket/WebSocketClient";
+import { useWebSocket } from "app/libs/websocket/WebSocketContext";
 import { WebSocketTopic } from "app/libs/websocket/WebSocketTopic";
 import { useEffect, useState } from "react";
-import { RequestBuilder } from "ts-request-builder";
 
 export default function Home() {
-  const [wsApi, setWsApi] = useState<string | null>(null);
   const [message, setMessage] = useState<string>("");
-  const [ws, setWs] = useState<WebSocketClient | null>(null);
-
-  const triggerServerWebsocket = () =>
-    new RequestBuilder("/api/websocket")
-      .withErrorHandling((err, status, statusText) =>
-        console.log("ERR: ", err, status, statusText)
-      )
-      .buildAsJson<{ url: string }>();
-
-  // Initialize Websocket
-  const init = async () => setWsApi((await triggerServerWebsocket()).url);
-
-  useEffect(() => {
-    if (wsApi) startWebSocket();
-  }, [wsApi]);
-
-  const startWebSocket = () => {
-    const ws = WebSocketClient.getInstance(`${wsApi}/api/websocket`);
-    ws.connect();
-    ws.setReconnectionLogic(triggerServerWebsocket);
-    setTimeout(() => setWs(ws), 0);
-
-    return ws.close;
-  };
+  const ws = useWebSocket();
 
   const displayMessage = (msg: string) => {
     setMessage(msg);
@@ -54,10 +29,6 @@ export default function Home() {
       }, 1000);
     }
   }, [ws]);
-
-  useEffect(() => {
-    init();
-  }, []);
 
   return (
     <div>
