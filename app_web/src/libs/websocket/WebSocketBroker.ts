@@ -2,7 +2,7 @@
 import { createServer, IncomingMessage, ServerResponse } from "http";
 import { WebSocketServer, WebSocket, RawData } from "ws";
 import { Socket } from "net";
-import { WebSocketTopics } from "./WebSocketTopic";
+import { WebSocketTopic } from "./WebSocketTopic";
 import { WebsocketActions } from "./WebSocketActions";
 
 type Topic = string;
@@ -58,7 +58,7 @@ export class WebSocketBroker {
       ws.send(
         JSON.stringify({
           action: WebsocketActions.PUBLISH,
-          topic: WebSocketTopics.CHAT,
+          topic: WebSocketTopic.CHAT,
           message: "Welcome to the WebSocket server!",
         })
       );

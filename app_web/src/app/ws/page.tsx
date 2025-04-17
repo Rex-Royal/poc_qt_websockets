@@ -47,7 +47,7 @@ export default function Home() {
         setTimeout(() => {
           ws.unsubscribe(WebSocketTopic.CHAT);
 
-          // ws.subscribe(WebSocketTopic.CHAT, displayMessage);
+          ws.subscribe(WebSocketTopic.CHAT, displayMessage);
           // Send a message (optional test)
           ws.publish(WebSocketTopic.CHAT, "Yo from client 2!");
         }, 1000);
