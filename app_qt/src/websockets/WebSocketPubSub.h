@@ -18,7 +18,7 @@ public:
     Q_INVOKABLE void disconnect();
     Q_INVOKABLE void subscribe(const QString &topic);
     Q_INVOKABLE void unsubscribe(const QString &topic);
-    Q_INVOKABLE void publish(const QString &topic, const QString &message);
+    Q_INVOKABLE void publish(const QString &topic, const QString &payload);
     
 public slots:
     void onMessageReceived(const QString &message);
@@ -26,7 +26,7 @@ public slots:
     void onError(QAbstractSocket::SocketError error);
 
 signals:
-    void messageReceived(const QString &topic, const QString &message);
+    void messageReceived(const QString &topic, const QString &payload);
 
 private:
     QWebSocket m_webSocket;

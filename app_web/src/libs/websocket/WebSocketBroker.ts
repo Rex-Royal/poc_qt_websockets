@@ -47,14 +47,13 @@ export class WebSocketBroker {
         );
 
         try {
-          const { action, topic, message } = JSON.parse(data.toString());
-          // console.log("received", action, topic, message);
+          const { action, topic, payload } = JSON.parse(data.toString());
           if (action === WebsocketActions.SUBSCRIBE) {
             subscription.topics.add(topic);
           } else if (action === WebsocketActions.UNSUBSCRIBE) {
             subscription.topics.delete(topic);
           } else if (action === WebsocketActions.PUBLISH) {
-            this.publish(topic, message);
+            this.publish(topic, payload);
           }
         } catch (err) {
           console.error("Invalid message", err);
@@ -69,7 +68,7 @@ export class WebSocketBroker {
         JSON.stringify({
           action: WebsocketActions.PUBLISH,
           topic: WebSocketTopic.CHAT,
-          message: "Welcome to the WebSocket server!",
+          payload: "Welcome to the WebSocket server!",
         })
       );
     });
@@ -97,10 +96,10 @@ export class WebSocketBroker {
     return WebSocketBroker.instance;
   }
 
-  publish(topic: Topic, message: string) {
+  publish(topic: Topic, payload: string) {
     for (const client of this.clients) {
       if (client.topics.has(topic)) {
-        client.socket.send(JSON.stringify({ topic, message }));
+        client.socket.send(JSON.stringify({ topic, payload }));
       }
     }
   }

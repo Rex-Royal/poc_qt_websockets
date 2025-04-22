@@ -15,23 +15,22 @@ ApplicationWindow {
         }
 
         // Handle incoming message for counter update
-        onMessageReceived: function(topic, message) {
-            console.log("TOPIC: ["+topic+"] MESSAGE: [" + message + "]");
-
-            if (topic === "counter") {
-                let value = parseInt(message);
-                if (!isNaN(value)) {
-                    counter = value;
-                }
-            } else {
-                console.log("Received:", topic, message);
+        onMessageReceived: function(topic, payload) {
+        if (topic === "counter")
+        {
+            let value = parseInt(payload);
+            if (!isNaN(value))
+            {
+                counter = value;
             }
-        }
+        } else {
+        console.log("Received:", topic, payload);
     }
+}
+}
 
-    // Maintain local state in QML
-    property int counter: 0
-    property var subscribedTopics: []
+// Maintain local state in QML
+property int counter: 0
 
     Column {
         spacing: 10
@@ -49,7 +48,14 @@ ApplicationWindow {
             text: "Subscribe"
             onClicked: {
                 webSocketPubSub.subscribe(topicInput.text)
-                subscribedTopics.push(topicInput.text)
+            }
+        }
+
+        Button {
+            text: "Subscribe to counter"
+            onClicked: {
+                webSocketPubSub.subscribe("counter")
+                topicInput.text = "counter"
             }
         }
 
@@ -57,8 +63,6 @@ ApplicationWindow {
             text: "Unsubscribe"
             onClicked: {
                 webSocketPubSub.unsubscribe(topicInput.text)
-                var index = subscribedTopics.indexOf(topicInput.text)
-                if (index >= 0) subscribedTopics.splice(index, 1)
             }
         }
 
@@ -94,7 +98,7 @@ ApplicationWindow {
         ListView {
             width: parent.width
             height: 100
-            model: subscribedTopics
+            model: webSocketPubSub
 
             delegate: Text {
                 text: modelData  // Display the topic name

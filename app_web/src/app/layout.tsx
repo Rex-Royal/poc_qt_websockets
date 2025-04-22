@@ -27,11 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gray-100 text-gray-900`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gray-100 text-gray-900 prose-sm flex flex-col`}
       >
         <WebSocketProvider>
           <NavBar />
-          <main className="p-6">{children}</main>
+          <main className="p-6 flex flex-1 justify-center">{children}</main>
         </WebSocketProvider>
       </body>
     </html>

@@ -1,10 +1,30 @@
 #include "WebSocketPubSub.h"
-// #include <QtWebSockets/QWebSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
 
-WebSocketPubSub::WebSocketPubSub(QObject *parent)
-    : QObject(parent)
+enum WebSocketAction
+{
+    SUBSCRIBE = 0,
+    PUBLISH = 1,
+    UNSUBSCRIBE = 2
+};
+
+QString actionToString(WebSocketAction action)
+{
+    switch (action)
+    {
+    case SUBSCRIBE:
+        return "subscribe";
+    case PUBLISH:
+        return "publish";
+    case UNSUBSCRIBE:
+        return "unsubscribe";
+    default:
+        return "unknown";
+    }
+}
+
+WebSocketPubSub::WebSocketPubSub(QObject *parent) : QObject(parent)
 {
     connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketPubSub::onConnected);
     connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketPubSub::onMessageReceived);
@@ -20,13 +40,13 @@ WebSocketPubSub::~WebSocketPubSub()
 void WebSocketPubSub::connectToUrl(const QUrl &url)
 {
     this->m_webSocket.open(url);
-    qDebug() << "OPEN";
+    qDebug() << "OPEN WebSockets " << url.toString();
 }
 
 void WebSocketPubSub::disconnect()
 {
     this->m_webSocket.close();
-    qDebug() << "CLOSE";
+    qDebug() << "CLOSE WebSockets";
 }
 
 void WebSocketPubSub::subscribe(const QString &topic)
@@ -37,13 +57,11 @@ void WebSocketPubSub::subscribe(const QString &topic)
         {
             // Send a subscription message to the WebSocket
             QJsonObject jsonMessage;
-            jsonMessage["action"] = "subscribe";
+            jsonMessage["action"] = actionToString(WebSocketAction::SUBSCRIBE);
             jsonMessage["topic"] = topic;
-            auto json = QJsonDocument(jsonMessage).toJson();
-            this->m_webSocket.sendTextMessage(json);
+            this->m_webSocket.sendTextMessage(QJsonDocument(jsonMessage).toJson());
 
             this->m_subscribedTopics.insert(topic); // Keep track of the subscribed topics
-            qDebug() << "Subscribed: " << json;
         }
     }
 }
@@ -54,28 +72,24 @@ void WebSocketPubSub::unsubscribe(const QString &topic)
     {
         // Send an unsubscribe message to the WebSocket
         QJsonObject jsonMessage;
-        jsonMessage["action"] = "unsubscribe";
+        jsonMessage["action"] = actionToString(WebSocketAction::UNSUBSCRIBE);
         jsonMessage["topic"] = topic;
-        auto json = QJsonDocument(jsonMessage).toJson();
-        this->m_webSocket.sendTextMessage(json);
+        this->m_webSocket.sendTextMessage(QJsonDocument(jsonMessage).toJson());
 
-        this->m_subscribedTopics.remove(topic); // Remove from the subscribed topics list
-        qDebug() << "Unsubscribed: " << json;
+        this->m_subscribedTopics.remove(topic);
     }
 }
 
-void WebSocketPubSub::publish(const QString &topic, const QString &message)
+void WebSocketPubSub::publish(const QString &topic, const QString &payload)
 {
     if (this->m_webSocket.state() == QAbstractSocket::ConnectedState)
     {
         // Send a publish message to the WebSocket
         QJsonObject jsonMessage;
-        jsonMessage["action"] = "publish";
+        jsonMessage["action"] = actionToString(WebSocketAction::PUBLISH);
         jsonMessage["topic"] = topic;
-        jsonMessage["message"] = message;
-        auto json = QJsonDocument(jsonMessage).toJson();
-        this->m_webSocket.sendTextMessage(json);
-        qDebug() << "Published: " << json;
+        jsonMessage["payload"] = payload;
+        this->m_webSocket.sendTextMessage(QJsonDocument(jsonMessage).toJson());
     }
 }
 
@@ -86,18 +100,15 @@ void WebSocketPubSub::onConnected()
 
 void WebSocketPubSub::onMessageReceived(const QString &msg)
 {
-    qDebug() << "INIT Received: " << msg;
     QJsonDocument doc = QJsonDocument::fromJson(msg.toUtf8());
     if (!doc.isObject())
         return;
 
     auto obj = doc.object();
     const QString topic = obj["topic"].toString();
-    const QString message = obj["message"].toString();
+    const QString payload = obj["payload"].toString();
 
-    emit messageReceived(topic, message);
-
-    qDebug() << "Received: " << msg;
+    emit messageReceived(topic, payload);
 }
 
 void WebSocketPubSub::onError(QAbstractSocket::SocketError error)

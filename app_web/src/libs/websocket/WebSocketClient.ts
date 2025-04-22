@@ -1,5 +1,4 @@
 import { WebsocketActions } from "./WebSocketActions";
-import { WebSocket_API } from "./WebSocketConf";
 
 type MessageHandler = (message: string) => void;
 
@@ -45,9 +44,9 @@ export class WebSocketClient {
     };
 
     this.socket.onmessage = (event: MessageEvent) => {
-      const { topic, message } = JSON.parse(event.data);
+      const { topic, payload } = JSON.parse(event.data);
       const handlers = this.subscriptions[topic] || [];
-      handlers.forEach((cb) => cb(message));
+      handlers.forEach((cb) => cb(payload));
     };
 
     this.socket.onclose = () => {
@@ -77,8 +76,8 @@ export class WebSocketClient {
     }
   }
 
-  publish(topic: string, message: string) {
-    this.send({ action: WebsocketActions.PUBLISH, topic, message });
+  publish(topic: string, payload: string) {
+    this.send({ action: WebsocketActions.PUBLISH, topic, payload });
   }
 
   private send(payload: object) {

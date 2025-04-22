@@ -55,13 +55,13 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     init();
   }, []);
 
-  const publish = (topic: string, message: string) => {
+  const publish = (topic: string, payload: string) => {
     if (
       ws.current &&
       ws.current.isConnected() &&
       ws.current.readyState() === WebSocket.OPEN
     ) {
-      ws.current.publish(topic, message);
+      ws.current.publish(topic, payload);
     }
   };
 

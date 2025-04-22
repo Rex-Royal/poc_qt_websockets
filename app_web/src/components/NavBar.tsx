@@ -8,6 +8,7 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/ws", label: "WebSocket" },
   { href: "/counter", label: "Counter" },
+  { href: "/history", label: "History" },
 ];
 
 export default function NavBar() {
