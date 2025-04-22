@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "app/components/Button";
-import { Dropdown } from "app/components/Dropdown";
+import { GuiCommands } from "app/components/GuiCommands";
 import { useWebSocket } from "app/libs/websocket/WebSocketContext";
 import { WebSocketTopic } from "app/libs/websocket/WebSocketTopic";
 import { useCallback, useEffect, useState } from "react";
+import { RequestBuilder } from "ts-request-builder";
 import { v4 } from "uuid";
 
 type Message = {
@@ -59,6 +59,7 @@ export default function Home() {
   );
 
   useEffect(() => {
+    new RequestBuilder("/api/websocket").build();
     const subscriptions = [
       WS.CM_PRODUCTS_DISABLED,
       WS.CM_PRODUCT_ACTIVE,
@@ -70,7 +71,9 @@ export default function Home() {
       WS.GUI_READ_STATUS,
     ];
 
-    subscriptions.forEach((topic) => ws.subscribe(topic, display(topic)));
+    setTimeout(() => {
+      subscriptions.forEach((topic) => ws.subscribe(topic, display(topic)));
+    },1000);
 
     return () => ws.clear();
   }, []);
@@ -113,83 +116,3 @@ const Message = ({ message }: { message: Message }) => (
     <div>📩 payload: [{message.payload || " - "}]</div>
   </div>
 );
-
-type MessageCommandType = "StartCleaning" | "TresterEmptied" | "BeansFilled";
-type MessageData = "cancel" | "ok";
-
-const GuiCommands = () => {
-  const ws = useWebSocket();
-
-  const [pid, setPid] = useState<number>(0);
-  const [commandType, setCommandType] = useState<MessageCommandType>();
-  const [messageData, setMessageData] = useState<MessageData>();
-
-  /**
-   * GUI_READ_STATUS - empty
-   * GUI_PRODUCT_START - pid
-   * GUI_PRODUCT_STOP - empty
-   * GUI_MSG_COMMAND - { type: StartCleaning | TresterEmptied | BeansFilled, data: "cancel" | "ok" }
-   */
-  const getStatus = () => ws && ws.publish(WebSocketTopic.GUI_READ_STATUS, "");
-
-  const productStart = () =>
-    ws && pid && ws.publish(WebSocketTopic.GUI_PRODUCT_START, String(pid));
-
-  const productStop = () =>
-    ws && ws.publish(WebSocketTopic.GUI_PRODUCT_STOP, "");
-
-  const msgCommand = () =>
-    ws &&
-    commandType &&
-    messageData &&
-    ws.publish(
-      WebSocketTopic.GUI_MSG_COMMAND,
-      JSON.stringify({ type: commandType, data: messageData })
-    );
-
-  const handlePidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d*$/.test(value)) {
-      setPid(parseInt(value));
-    }
-  };
-
-  return (
-    <>
-      <Button label="Get Status" onClick={getStatus} />
-
-      <div className="flex flex-col items-center">
-        <label htmlFor="pid" className="block mb-2 text-sm font-semibold">
-          Enter the PID of the One Process:
-        </label>
-        <input
-          id="pid"
-          type="text"
-          value={pid}
-          onChange={handlePidChange}
-          className="p-2 border rounded leading-1 w-full"
-          placeholder="e.g., 4242"
-        />
-      </div>
-
-      <Button label="Start selected product" onClick={productStart} />
-      <Button label="Stop product" onClick={productStop} />
-
-      <Dropdown<MessageCommandType>
-        id="commandType"
-        label="Select Command Type"
-        value={commandType}
-        options={["StartCleaning", "TresterEmptied", "BeansFilled"]}
-        onChange={setCommandType}
-      />
-      <Dropdown<MessageData>
-        id="messageData"
-        label="Select Message Data"
-        value={messageData}
-        options={["cancel", "ok"]}
-        onChange={setMessageData}
-      />
-      <Button label="Message comand" onClick={msgCommand} />
-    </>
-  );
-};
