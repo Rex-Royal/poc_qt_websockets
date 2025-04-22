@@ -13,9 +13,11 @@ include_directories(${CMAKE_BINARY_DIR}/conan/include)
 link_directories(${CMAKE_BINARY_DIR}/conan/lib)
 
 
-find_package(Qt5 REQUIRED COMPONENTS Core Gui Quick QuickControls2)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Quick QuickControls2 WebSockets)
 
 include_directories(
+    ${CMAKE_SOURCE_DIR}/src
+
     # QT includes
     ${Qt5Core_INCLUDE_DIRS}
     ${Qt5Gui_INCLUDE_DIRS}
@@ -23,14 +25,17 @@ include_directories(
     ${Qt5QuickControls2_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}
-    main.cpp
-    resources.qrc
+file(GLOB_RECURSE SOURCES
+    src/*.cpp
+    src/*.qrc
 )
+
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME}
     Qt5::Core
     Qt5::Gui
     Qt5::Quick
     Qt5::QuickControls2
+    Qt5::WebSockets
 )
