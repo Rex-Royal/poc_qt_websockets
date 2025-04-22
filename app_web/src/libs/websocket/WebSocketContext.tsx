@@ -18,6 +18,7 @@ interface WebSocketContextType {
   publish: (topic: string, message: string) => void;
   subscribe: (topic: string, handler: MessageHandler) => void;
   unsubscribe: (topic: string) => void;
+  clear: () => void;
 }
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
 
@@ -75,8 +76,12 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     ws.current?.unsubscribe(topic);
   };
 
+  const clear = () => ws.current?.clear();
+
   return (
-    <WebSocketContext.Provider value={{ publish, subscribe, unsubscribe }}>
+    <WebSocketContext.Provider
+      value={{ publish, subscribe, unsubscribe, clear }}
+    >
       {children}
     </WebSocketContext.Provider>
   );

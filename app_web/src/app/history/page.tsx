@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "app/components/Button";
+import { Dropdown } from "app/components/Dropdown";
 import { useWebSocket } from "app/libs/websocket/WebSocketContext";
 import { WebSocketTopic } from "app/libs/websocket/WebSocketTopic";
 import { useCallback, useEffect, useState } from "react";
@@ -58,63 +59,21 @@ export default function Home() {
   );
 
   useEffect(() => {
-    if (ws) {
-      setTimeout(() => {
-        // CM
-        ws.subscribe(WS.CM_PRODUCTS_DISABLED, display(WS.CM_PRODUCTS_DISABLED));
-        ws.subscribe(WS.CM_PRODUCT_ACTIVE, display(WS.CM_PRODUCT_ACTIVE));
-        ws.subscribe(WS.CM_STATUS, display(WS.CM_STATUS));
-        ws.subscribe(WS.CM_USER_MSG, display(WS.CM_USER_MSG));
-        // GUI
-        ws.subscribe(WS.GUI_MSG_COMMAND, display(WS.GUI_MSG_COMMAND));
-        ws.subscribe(WS.GUI_PRODUCT_START, display(WS.GUI_PRODUCT_START));
-        ws.subscribe(WS.GUI_PRODUCT_STOP, display(WS.GUI_PRODUCT_STOP));
-        ws.subscribe(WS.GUI_READ_STATUS, display(WS.GUI_READ_STATUS));
-      });
-    }
-    return () => {
-      if (ws) {
-        ws.unsubscribe(WS.CM_PRODUCTS_DISABLED);
-        ws.unsubscribe(WS.CM_PRODUCT_ACTIVE);
-        ws.unsubscribe(WS.CM_STATUS);
-        ws.unsubscribe(WS.CM_USER_MSG);
-        // GUI
-        ws.unsubscribe(WS.GUI_MSG_COMMAND);
-        ws.unsubscribe(WS.GUI_PRODUCT_START);
-        ws.unsubscribe(WS.GUI_PRODUCT_STOP);
-        ws.unsubscribe(WS.GUI_READ_STATUS);
-      }
-    };
-  }, [ws]);
+    const subscriptions = [
+      WS.CM_PRODUCTS_DISABLED,
+      WS.CM_PRODUCT_ACTIVE,
+      WS.CM_STATUS,
+      WS.CM_USER_MSG,
+      WS.GUI_MSG_COMMAND,
+      WS.GUI_PRODUCT_START,
+      WS.GUI_PRODUCT_STOP,
+      WS.GUI_READ_STATUS,
+    ];
 
-  // useEffect(() => {
-  //   if (ws) {
-  //     // CM
-  //     ws.subscribe(WS.CM_PRODUCTS_DISABLED, display(WS.CM_PRODUCTS_DISABLED));
-  //     ws.subscribe(WS.CM_PRODUCT_ACTIVE, display(WS.CM_PRODUCT_ACTIVE));
-  //     ws.subscribe(WS.CM_STATUS, display(WS.CM_STATUS));
-  //     ws.subscribe(WS.CM_USER_MSG, display(WS.CM_USER_MSG));
-  //     // GUI
-  //     ws.subscribe(WS.GUI_MSG_COMMAND, display(WS.GUI_MSG_COMMAND));
-  //     ws.subscribe(WS.GUI_PRODUCT_START, display(WS.GUI_PRODUCT_START));
-  //     ws.subscribe(WS.GUI_PRODUCT_STOP, display(WS.GUI_PRODUCT_STOP));
-  //     ws.subscribe(WS.GUI_READ_STATUS, display(WS.GUI_READ_STATUS));
-  //   }
+    subscriptions.forEach((topic) => ws.subscribe(topic, display(topic)));
 
-  //   return () => {
-  //     if (ws) {
-  //       ws.unsubscribe(WS.CM_PRODUCTS_DISABLED);
-  //       ws.unsubscribe(WS.CM_PRODUCT_ACTIVE);
-  //       ws.unsubscribe(WS.CM_STATUS);
-  //       ws.unsubscribe(WS.CM_USER_MSG);
-  //       // GUI
-  //       ws.unsubscribe(WS.GUI_MSG_COMMAND);
-  //       ws.unsubscribe(WS.GUI_PRODUCT_START);
-  //       ws.unsubscribe(WS.GUI_PRODUCT_STOP);
-  //       ws.unsubscribe(WS.GUI_READ_STATUS);
-  //     }
-  //   };
-  // }, []);
+    return () => ws.clear();
+  }, []);
 
   return (
     <div className="flex flex-1 flex-col border border-blue-500 w-full">
@@ -125,7 +84,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="border border-blue-500 flex h-30 p-1">
+      <div className="border border-blue-500 flex p-1 items-center gap-2">
         <h3 className="p-0! m-0!">Latest message: </h3>
         {message && <Message message={message} />}
       </div>
@@ -151,7 +110,7 @@ const Message = ({ message }: { message: Message }) => (
   <div className="flex">
     <b className="min-w-48">{message.topic}</b>
 
-    <div>📩 payload: [{message.payload ||" - "}]</div>
+    <div>📩 payload: [{message.payload || " - "}]</div>
   </div>
 );
 
@@ -184,7 +143,7 @@ const GuiCommands = () => {
     commandType &&
     messageData &&
     ws.publish(
-      WebSocketTopic.GUI_PRODUCT_START,
+      WebSocketTopic.GUI_MSG_COMMAND,
       JSON.stringify({ type: commandType, data: messageData })
     );
 
@@ -199,20 +158,37 @@ const GuiCommands = () => {
     <>
       <Button label="Get Status" onClick={getStatus} />
 
-      <label htmlFor="pid" className="m-0! p-0! block mb-2 text-sm">
-        Enter the PID of the One Process:
-      </label>
-      <input
-        id="pid"
-        type="text"
-        value={pid}
-        onChange={handlePidChange}
-        className="p-2 m-2 text-black rounded"
-        placeholder="e.g., 4242"
-      />
+      <div className="flex flex-col items-center">
+        <label htmlFor="pid" className="block mb-2 text-sm font-semibold">
+          Enter the PID of the One Process:
+        </label>
+        <input
+          id="pid"
+          type="text"
+          value={pid}
+          onChange={handlePidChange}
+          className="p-2 border rounded leading-1 w-full"
+          placeholder="e.g., 4242"
+        />
+      </div>
 
       <Button label="Start selected product" onClick={productStart} />
       <Button label="Stop product" onClick={productStop} />
+
+      <Dropdown<MessageCommandType>
+        id="commandType"
+        label="Select Command Type"
+        value={commandType}
+        options={["StartCleaning", "TresterEmptied", "BeansFilled"]}
+        onChange={setCommandType}
+      />
+      <Dropdown<MessageData>
+        id="messageData"
+        label="Select Message Data"
+        value={messageData}
+        options={["cancel", "ok"]}
+        onChange={setMessageData}
+      />
       <Button label="Message comand" onClick={msgCommand} />
     </>
   );

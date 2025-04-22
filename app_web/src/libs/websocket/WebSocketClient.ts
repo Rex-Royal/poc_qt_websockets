@@ -88,6 +88,10 @@ export class WebSocketClient {
     }
   }
 
+  clear() {
+    this.subscriptions = {};
+  }
+
   readyState() {
     return this.socket?.readyState;
   }
