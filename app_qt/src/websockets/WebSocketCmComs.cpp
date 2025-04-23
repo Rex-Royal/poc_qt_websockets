@@ -79,25 +79,12 @@ void WebSocketCmComs::sendCmStatus(const int &status)
 
 void WebSocketCmComs::sendCmUserMsg(const int &userMessage)
 {
-    QJsonObject jsonObj;
-    jsonObj["userMessage"] = userMessage;
-
-    QJsonDocument doc(jsonObj);
-    QString payload = QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
-
-    this->m_ws->publish(topicToString(WebSocketTopics::CM_USER_MSG), payload);
+    this->m_ws->publish(topicToString(WebSocketTopics::CM_USER_MSG), QString::number(userMessage));
 }
 
 void WebSocketCmComs::sendCmProductActive(const int &productId)
 {
-    QJsonObject jsonObj;
-    jsonObj["productId"] = productId;
-    jsonObj["active"] = true;
-
-    QJsonDocument doc(jsonObj);
-    QString payload = QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
-
-    this->m_ws->publish(topicToString(WebSocketTopics::CM_PRODUCT_ACTIVE), payload);
+    this->m_ws->publish(topicToString(WebSocketTopics::CM_PRODUCT_ACTIVE), QString::number(productId));
 }
 
 void WebSocketCmComs::sendCmProductsDisabled(const QList<int> &productIds)
@@ -106,10 +93,7 @@ void WebSocketCmComs::sendCmProductsDisabled(const QList<int> &productIds)
     for (int id : productIds)
         jsonArray.append(id);
 
-    QJsonObject jsonObj;
-    jsonObj["disabledProducts"] = jsonArray;
-
-    QJsonDocument doc(jsonObj);
+    QJsonDocument doc(jsonArray);
     QString payload = QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
 
     this->m_ws->publish(topicToString(WebSocketTopics::CM_PRODUCTS_DISABLED), payload);

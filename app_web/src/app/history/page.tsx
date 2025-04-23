@@ -73,7 +73,7 @@ export default function Home() {
 
     setTimeout(() => {
       subscriptions.forEach((topic) => ws.subscribe(topic, display(topic)));
-    },1000);
+    }, 1000);
 
     return () => ws.clear();
   }, []);
@@ -113,6 +113,6 @@ const Message = ({ message }: { message: Message }) => (
   <div className="flex">
     <b className="min-w-48">{message.topic}</b>
 
-    <div>📩 payload: [{message.payload || " - "}]</div>
+    <div>📩 payload: {message.payload || "[ - ]"}</div>
   </div>
 );
