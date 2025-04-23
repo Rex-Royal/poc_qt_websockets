@@ -26,11 +26,15 @@ include_directories(
 )
 
 file(GLOB_RECURSE SOURCES
+    src/*.hpp
     src/*.cpp
     src/*.qrc
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+# Ensure the qrc file is processed by Qt's build system
+qt_add_resources(RESOURCE_FILES src/resources.qrc)
+
+add_executable(${PROJECT_NAME} ${SOURCES} ${RESOURCE_FILES})
 
 target_link_libraries(${PROJECT_NAME}
     Qt5::Core

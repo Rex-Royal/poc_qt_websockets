@@ -5,7 +5,9 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/include/x86_64-linux-gnu/qt5/QtCore",
-                "/usr/include/x86_64-linux-gnu/qt5"
+                "/usr/include/x86_64-linux-gnu/qt5",
+                "/usr/include/x86_64-linux-gnu/qt5/QtQml",
+                "/usr/include/x86_64-linux-gnu/qt5/QtGui"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

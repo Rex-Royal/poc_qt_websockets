@@ -53,7 +53,7 @@ export class WebSocketBroker {
           } else if (action === WebsocketActions.UNSUBSCRIBE) {
             subscription.topics.delete(topic);
           } else if (action === WebsocketActions.PUBLISH) {
-            this.publish(topic, payload);
+            this.publish(action, topic, payload);
           }
         } catch (err) {
           console.error("Invalid message", err);
@@ -96,10 +96,10 @@ export class WebSocketBroker {
     return WebSocketBroker.instance;
   }
 
-  publish(topic: Topic, payload: string) {
+  publish(action: WebsocketActions, topic: Topic, payload: string) {
     for (const client of this.clients) {
       if (client.topics.has(topic)) {
-        client.socket.send(JSON.stringify({ topic, payload }));
+        client.socket.send(JSON.stringify({ action, topic, payload }));
       }
     }
   }

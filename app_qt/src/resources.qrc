@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>qml/main.qml</file>
+        <file>qml/components/StatusControl.qml</file>
+        <file>qml/components/StatusControlArray.qml</file>
     </qresource>
 </RCC>

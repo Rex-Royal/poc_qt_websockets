@@ -15,7 +15,7 @@ public:
     explicit WebSocketPubSub(QObject *parent = nullptr);
     ~WebSocketPubSub();
 
-    Q_INVOKABLE void connectToUrl(const QUrl &url);
+    Q_INVOKABLE void connectToUrl(const QUrl &url, bool reconnect = false);
     Q_INVOKABLE void disconnect();
     Q_INVOKABLE void subscribe(const QString &topic, bool force = false);
     Q_INVOKABLE void unsubscribe(const QString &topic);
@@ -27,7 +27,7 @@ public slots:
     void onError(QAbstractSocket::SocketError error);
 
 signals:
-    void messageReceived(const QString &topic, const QString &payload);
+    void messageReceived(const QString &action, const QString &topic, const QString &payload);
 
 private:
     void scheduleReconnect();
@@ -36,6 +36,8 @@ private:
     QSet<QString> m_subscribedTopics; // Store subscribed topics
 
     // reconnection logic
+    bool reconnects = true;
+
     bool m_reconnectScheduled = false;
     QTimer m_reconnectTimer;
     QUrl m_lastUrl;

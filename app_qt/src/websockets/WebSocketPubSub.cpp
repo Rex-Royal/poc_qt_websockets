@@ -1,30 +1,10 @@
 #include "WebSocketPubSub.h"
+#include "WebSocketAction.h"
+
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QtCore/qmath.h>  // For qPow
 #include <QtCore/QtGlobal> // For qMin
-
-enum WebSocketAction
-{
-    SUBSCRIBE = 0,
-    PUBLISH = 1,
-    UNSUBSCRIBE = 2
-};
-
-QString actionToString(WebSocketAction action)
-{
-    switch (action)
-    {
-    case SUBSCRIBE:
-        return "subscribe";
-    case PUBLISH:
-        return "publish";
-    case UNSUBSCRIBE:
-        return "unsubscribe";
-    default:
-        return "unknown";
-    }
-}
 
 WebSocketPubSub::WebSocketPubSub(QObject *parent) : QObject(parent)
 {
@@ -39,8 +19,9 @@ WebSocketPubSub::~WebSocketPubSub()
     this->disconnect();
 }
 
-void WebSocketPubSub::connectToUrl(const QUrl &url)
+void WebSocketPubSub::connectToUrl(const QUrl &url, bool reconnects)
 {
+    this->reconnects = reconnects;
     this->m_lastUrl = url;
     this->m_webSocket.open(url);
     qDebug() << "OPEN WebSockets " << url.toString();
@@ -122,10 +103,11 @@ void WebSocketPubSub::onMessageReceived(const QString &msg)
         return;
 
     auto obj = doc.object();
+    const QString action = obj["action"].toString();
     const QString topic = obj["topic"].toString();
     const QString payload = obj["payload"].toString();
 
-    emit this->messageReceived(topic, payload);
+    emit this->messageReceived(action, topic, payload);
 }
 
 void WebSocketPubSub::onError(QAbstractSocket::SocketError error)

@@ -2,16 +2,18 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import MyApp 1.0
 
+import "components"
+
 ApplicationWindow {
-    width: 640
+    width: 1600
     height: 360
     visible: true
     title: "WebSocket Pub/Sub"
 
     property int counter: 0
 
-    WebSocketPubSub {
-        id: webSocketPubSub
+    WebSocketCmComs  {
+        id: webSocketCmComs
 
         onMessageReceived: function(topic, payload) {
             if (topic === "counter") {
@@ -20,7 +22,7 @@ ApplicationWindow {
                     counter = value;
                 }
             } else if (topic === "GUI_READ_STATUS") {
-                webSocketPubSub.publish("CM_STATUS", "2")
+                webSocketCmComs.sendCmStatus("CM_STATUS", 2);
             } else {
                 console.log("Received:", topic, payload);
             }
@@ -33,14 +35,46 @@ ApplicationWindow {
         repeat: false
         onTriggered: {
             console.log("Subscribing to GUI_READ_STATUS");
-            webSocketPubSub.subscribe("GUI_READ_STATUS");
+            webSocketCmComs.subscribeToGui();
+        }
+    }
+
+    AtomObserverWrapper {
+        id: cm_status_obs
+        atom: cm_status
+
+        Component.onCompleted: {
+            cm_status_obs.observe(() => {
+                console.log("CM STATUS observed from QML: ", cm_status_obs.getValue());
+                webSocketCmComs.sendCmStatus()
+            });
         }
     }
 
     Component.onCompleted: {
-        webSocketPubSub.connectToUrl("ws://localhost:3002");
+        webSocketCmComs.setStatusObserver(cm_status_obs)
+        webSocketCmComs.start("ws://localhost:3002");  // connect to WebSocket server
         subscriptionDelay.start();
     }
+
+    Atom {
+        id: cm_status
+        value: 2
+    }
+    Atom {
+        id: cm_user_msg
+        value: 4
+    }
+    Atom {
+        id: cm_product_active
+        value: 8
+    }
+    Atom {
+        id: cm_products_disabled
+        value: [16, 32, 64]
+    }
+
+    
 
     Row {
         anchors.fill: parent
@@ -49,74 +83,59 @@ ApplicationWindow {
 
         Column {
             spacing: 10
-            width: parent.width / 2
-
-            TextField {
-                id: topicInput
-                width: parent.width
-                placeholderText: "Enter topic"
-            }
+            width: parent.width * 1/3
 
             Button {
-                text: "Subscribe"
-                onClicked: webSocketPubSub.subscribe(topicInput.text)
-            }
-
-            Button {
-                text: "Subscribe to counter"
+                text: "CM_STATUS"
                 onClicked: {
-                    webSocketPubSub.subscribe("counter");
-                    topicInput.text = "counter";
+                    webSocketCmComs.sendCmStatus()
                 }
             }
-
             Button {
-                text: "Unsubscribe"
-                onClicked: webSocketPubSub.unsubscribe(topicInput.text)
-            }
-
-            Button {
-                text: "Reset"
-                onClicked: webSocketPubSub.publish(topicInput.text, "0")
-            }
-
-            Text {
-                text: "Counter: " + counter
-                font.pointSize: 24
-            }
-
-            Row {
-                spacing: 10
-                Button {
-                    text: "Increment"
-                    onClicked: webSocketPubSub.publish("counter", counter + 1)
+                text: "CM_USER_MSG"
+                onClicked: {
+                    // webSocketCmComs
+                    webSocketCmComs.sendCmUserMsg(cm_user_msg.value)
                 }
-                Button {
-                    text: "Decrement"
-                    onClicked: webSocketPubSub.publish("counter", counter - 1)
+            }
+            Button {
+                text: "CM_PRODUCT_ACTIVE"
+                onClicked: {
+                    // webSocketCmComs
+                    webSocketCmComs.sendCmProductActive(cm_product_active.value)
+                }
+            }
+            Button {
+                text: "CM_PRODUCTS_DISABLED"
+                onClicked: {
+                    // webSocketCmComs
+                    webSocketCmComs.sendCmProductsDisabled(cm_products_disabled.value)
                 }
             }
         }
 
         Column {
             spacing: 10
-            width: parent.width / 2
+            width: parent.width * 2/3
 
-            Button {
-                text: "CM_STATUS"
-                onClicked: webSocketPubSub.publish("CM_STATUS", "2")
+            StatusControl {
+                label: "STATUS"
+                status: cm_status
             }
-            Button {
-                text: "CM_USER_MSG"
-                onClicked: webSocketPubSub.publish("CM_USER_MSG", "3")
+
+            StatusControl {
+                label: "USER MSG"
+                status: cm_user_msg
             }
-            Button {
-                text: "CM_PRODUCT_ACTIVE"
-                onClicked: webSocketPubSub.publish("CM_PRODUCT_ACTIVE", "4")
+
+            StatusControl {
+                label: "PRODUCT ACTIVE"
+                status: cm_product_active
             }
-            Button {
-                text: "CM_PRODUCTS_DISABLED"
-                onClicked: webSocketPubSub.publish("CM_PRODUCTS_DISABLED", "[7, 9, 16]")
+
+            StatusControlArray {
+                label: "PRODUCTS DISABLED"
+                status: cm_products_disabled
             }
         }
     }
