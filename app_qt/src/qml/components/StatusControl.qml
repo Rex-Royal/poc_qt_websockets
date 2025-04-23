@@ -29,6 +29,14 @@ Item {
 
         Button {
             anchors.verticalCenter: parent.verticalCenter
+            text: "reset"
+            onClicked: {
+                status.value = 0
+            }
+        }
+
+        Button {
+            anchors.verticalCenter: parent.verticalCenter
             text: "-"
             onClicked: {
                 status.value -= 1

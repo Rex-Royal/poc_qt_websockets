@@ -10,13 +10,22 @@ The QT Proof of Concept to showcase how to communicate publish/subscribe to WS.
 
 ```bash
 app_qt/
+├── src/                  # QT code base
+│   ├── qml/              # QML code
+│   │   ├── components/   # QML components
+│   │   │   └── ...
+│   │   └── main.qml      # Main QML source file
+│   ├── state/            # App State atomic utilities
+│   │   └── ...
+│   ├── websockets/       # WebSockets communication files
+│   │   └── ...
+│   ├── main.cpp          # Main C++ source file
+│   └── resources.qrc     # Qt resource collection file
 ├── CMakeLists.txt        # CMake build configuration file
 ├── compile.sh            # Compile script
 ├── conanfile.txt         # Conan dependency configuration
 ├── install.sh            # Install script
-├── main.cpp              # Main C++ source file
-├── main.qml              # QML user interface file
-└── resources.qrc         # Qt resource collection file
+└── ...
 ```
 
 #### QT Installation & Running
@@ -45,4 +54,5 @@ app_web/
 1. Install NVM (Nove Version Manager); see [freeCodeCamp tutorial](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/).
 2. Install Node (using NVM)
 3. `cd ./app_web/`
-4. `npm run dev`
+4. `npm install`
+5. `npm run dev`

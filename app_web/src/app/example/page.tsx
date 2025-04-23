@@ -1,11 +1,12 @@
 "use client";
 
+import { v4 } from "uuid";
+import { RequestBuilder } from "ts-request-builder";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import { GuiCommands } from "app/components/GuiCommands";
 import { useWebSocket } from "app/libs/websocket/WebSocketContext";
 import { WebSocketTopic } from "app/libs/websocket/WebSocketTopic";
-import { useCallback, useEffect, useState } from "react";
-import { RequestBuilder } from "ts-request-builder";
-import { v4 } from "uuid";
 
 type Message = {
   id: string;
@@ -58,8 +59,11 @@ export default function Home() {
     []
   );
 
-  useEffect(() => {
-    new RequestBuilder("/api/websocket").build();
+  const hasRun = useRef(false);
+
+  const init = async () => {
+    await new RequestBuilder("/api/websocket").build();
+    ws.clear();
     const subscriptions = [
       WS.CM_PRODUCTS_DISABLED,
       WS.CM_PRODUCT_ACTIVE,
@@ -74,6 +78,13 @@ export default function Home() {
     setTimeout(() => {
       subscriptions.forEach((topic) => ws.subscribe(topic, display(topic)));
     }, 1000);
+  };
+
+  useEffect(() => {
+    if (!hasRun.current) {
+      init();
+      hasRun.current = true;
+    }
 
     return () => ws.clear();
   }, []);

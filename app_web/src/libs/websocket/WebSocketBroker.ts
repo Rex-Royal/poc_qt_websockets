@@ -53,7 +53,7 @@ export class WebSocketBroker {
           } else if (action === WebsocketActions.UNSUBSCRIBE) {
             subscription.topics.delete(topic);
           } else if (action === WebsocketActions.PUBLISH) {
-            this.publish(action, topic, payload);
+            this.publish(topic, payload);
           }
         } catch (err) {
           console.error("Invalid message", err);
@@ -96,18 +96,12 @@ export class WebSocketBroker {
     return WebSocketBroker.instance;
   }
 
-  publish(action: WebsocketActions, topic: Topic, payload: string) {
+  publish(topic: Topic, payload: string) {
     for (const client of this.clients) {
       if (client.topics.has(topic)) {
+        const action = WebsocketActions.PUBLISH;
         client.socket.send(JSON.stringify({ action, topic, payload }));
       }
     }
-  }
-
-  subscribe(topic: Topic, callback: Callback) {
-    // Optional: could be extended to support internal handlers (not just WS)
-    console.warn(
-      "Internal subscribe not implemented. Use WS clients to subscribe."
-    );
   }
 }
