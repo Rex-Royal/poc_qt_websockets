@@ -36,11 +36,16 @@ void WebSocketCmComs::onMessageReceived(const QString &action, const QString &to
     {
         this->sendCmStatus();
     }
+
+    emit this->messageReceived(action, topic, payload);
 }
 
 void WebSocketCmComs::subscribeToGui()
 {
     this->m_ws->subscribe(topicToString(WebSocketTopics::GUI_READ_STATUS));
+    this->m_ws->subscribe(topicToString(WebSocketTopics::GUI_PRODUCT_START));
+    this->m_ws->subscribe(topicToString(WebSocketTopics::GUI_PRODUCT_STOP));
+    this->m_ws->subscribe(topicToString(WebSocketTopics::GUI_MSG_COMMAND));
 }
 
 void WebSocketCmComs::sendCommand(const QString &topic, const QString &payload)

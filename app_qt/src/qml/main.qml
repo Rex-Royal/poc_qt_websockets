@@ -15,7 +15,7 @@ ApplicationWindow {
     WebSocketCmComs  {
         id: webSocketCmComs
 
-        onMessageReceived: function(topic, payload) {
+        onMessageReceived: function(action, topic, payload) {
             if (topic === "counter") {
                 let value = parseInt(payload);
                 if (!isNaN(value)) {
@@ -24,7 +24,7 @@ ApplicationWindow {
             } else if (topic === "GUI_READ_STATUS") {
                 webSocketCmComs.sendCmStatus("CM_STATUS", 2);
             } else {
-                console.log("Received:", topic, payload);
+                console.log("Received:", action, " >> ", topic, " - ", payload);
             }
         }
     }
