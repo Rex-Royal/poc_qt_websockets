@@ -22,6 +22,7 @@ ApplicationWindow {
                     counter = value;
                 }
             } else if (topic === "GUI_READ_STATUS") {
+                // response on "GUI read status" request
                 webSocketCmComs.sendCmStatus("CM_STATUS", 2);
             } else {
                 console.log("Received:", action, " >> ", topic, " - ", payload);
@@ -44,6 +45,7 @@ ApplicationWindow {
         atom: cm_status
 
         Component.onCompleted: {
+            // observer to trigger websocket "Send CM Status" on status state change
             cm_status_obs.observe(() => {
                 console.log("CM STATUS observed from QML: ", cm_status_obs.getValue());
                 webSocketCmComs.sendCmStatus()
