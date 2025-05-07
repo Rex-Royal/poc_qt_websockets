@@ -81,10 +81,10 @@ int main(int argc, char *argv[])
     }
 
     // Connect application quit signal to stop the broker
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, [broker]()
-                     {
-        qDebug().noquote() << "Application quitting, stopping broker...";
-        broker->stop(); });
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [broker]() {
+        if (broker)
+            broker->stop();
+    });
 
     return app.exec();
 }
