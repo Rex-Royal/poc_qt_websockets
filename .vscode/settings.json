@@ -1,9 +1,9 @@
 {
     "cmake.sourceDirectory": "/home/nuno/PoCs/poc_qt_websockets/app_qt",
     "files.associations": {
+        "*.dbclient-js": "javascript",
         "*.sqlbook": "sql",
         "*.ndjson": "jsonl",
-        "*.dbclient-js": "javascript",
         "qobject": "cpp",
         "qstring": "cpp",
         "qwebsocket": "cpp",
@@ -73,6 +73,7 @@
         "variant": "cpp",
         "semaphore": "cpp",
         "format": "cpp",
-        "qtimer": "cpp"
+        "qtimer": "cpp",
+        "qdebug": "cpp"
     }
 }

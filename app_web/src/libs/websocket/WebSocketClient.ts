@@ -1,9 +1,8 @@
 import { WebsocketActions } from "./WebSocketActions";
-
-type MessageHandler = (message: string) => void;
+import { OnSocketMessageHander } from "./WebSocketContext";
 
 interface Subscriptions {
-  [topic: string]: MessageHandler[];
+  [topic: string]: OnSocketMessageHander[];
 }
 
 export class WebSocketClient {
@@ -44,9 +43,9 @@ export class WebSocketClient {
     };
 
     this.socket.onmessage = (event: MessageEvent) => {
-      const { topic, payload } = JSON.parse(event.data);
+      const { action, topic, payload } = JSON.parse(event.data);
       const handlers = this.subscriptions[topic] || [];
-      handlers.forEach((cb) => cb(payload));
+      handlers.forEach((cb) => cb(action, topic, payload));
     };
 
     this.socket.onclose = () => {
@@ -61,7 +60,7 @@ export class WebSocketClient {
     };
   }
 
-  subscribe(topic: string, callback: MessageHandler) {
+  subscribe(topic: string, callback: OnSocketMessageHander) {
     if (!this.subscriptions[topic]) {
       this.subscriptions[topic] = [];
       this.send({ action: WebsocketActions.SUBSCRIBE, topic });

@@ -16,7 +16,7 @@ Item {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: label + ": " + status.value
-            font.pointSize: 20
+            font.pointSize: 10
         }
 
         Text {

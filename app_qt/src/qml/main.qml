@@ -16,6 +16,7 @@ ApplicationWindow {
         id: webSocketCmComs
 
         onMessageReceived: function(action, topic, payload) {
+            // console.log("on message received");
             if (topic === "counter") {
                 let value = parseInt(payload);
                 if (!isNaN(value)) {
@@ -23,7 +24,7 @@ ApplicationWindow {
                 }
             } else if (topic === "GUI_READ_STATUS") {
                 // response on "GUI read status" request
-                webSocketCmComs.sendCmStatus("CM_STATUS", 2);
+                // webSocketCmComs.sendCmStatus("CM_STATUS", 2);
             } else {
                 console.log("Received:", action, " >> ", topic, " - ", payload);
             }
@@ -126,17 +127,17 @@ ApplicationWindow {
             }
 
             StatusControl {
-                label: "USER MSG"
+                label: "USER MSG (not auto)"
                 status: cm_user_msg
             }
 
             StatusControl {
-                label: "PRODUCT ACTIVE"
+                label: "PRODUCT ACTIVE (not auto)"
                 status: cm_product_active
             }
 
             StatusControlArray {
-                label: "PRODUCTS DISABLED"
+                label: "PRODUCTS DISABLED (not auto)"
                 status: cm_products_disabled
             }
         }

@@ -126,22 +126,44 @@ void WebSocketPubSub::onError(QAbstractSocket::SocketError error)
 // reconnection logic
 void WebSocketPubSub::scheduleReconnect()
 {
+    // Don't schedule multiple reconnects or try to reconnect when already connecting
     if (this->m_reconnectScheduled || this->m_webSocket.state() == QAbstractSocket::ConnectingState)
         return;
 
     this->m_reconnectScheduled = true;
 
-    // Exponential backoff with a 1.5x growth factor, capped at 30s.
-    // This provides smoother reconnection intervals without doubling too aggressively.
-    int delay = qMin(1000 * (1 << this->m_reconnectAttempts), 30000); // exponential backoff
-    qDebug() << "Scheduling reconnect in" << delay << "ms";
+    // Cap the reconnect attempts to prevent integer overflow
+    const int maxAttempts = 10;
+    if (this->m_reconnectAttempts >= maxAttempts)
+    {
+        this->m_reconnectAttempts = maxAttempts;
+    }
+
+    // Base delay is 1000ms (1 second)
+    // Use a proper exponential backoff with jitter for better network behavior
+    int baseDelay = 1000;
+    int maxDelay = 30000; // 30 seconds max delay
+
+    // Calculate delay with exponential backoff (1.5^n rather than 2^n for smoother growth)
+    double factor = std::pow(1.5, this->m_reconnectAttempts);
+    int delay = static_cast<int>(baseDelay * factor);
+
+    // Add jitter (±20% randomness) to prevent reconnection storms
+    int jitter = static_cast<int>(delay * 0.2 * (static_cast<double>(rand()) / RAND_MAX - 0.5));
+    delay += jitter;
+
+    // Ensure delay is within bounds (minimum 1s, maximum 30s)
+    delay = qBound(1000, delay, maxDelay);
+
+    qDebug() << "Scheduling reconnect #" << (this->m_reconnectAttempts + 1)
+             << "in" << delay << "ms";
 
     QTimer::singleShot(delay, this, [this]()
                        {
-                        this->m_reconnectScheduled = false;
+        this->m_reconnectScheduled = false;
 
         if (this->m_webSocket.state() == QAbstractSocket::UnconnectedState) {
-            qDebug() << "Reconnecting...";
+            qDebug() << "Attempting reconnect #" << (this->m_reconnectAttempts + 1);
             connectToUrl(this->m_lastUrl);
             this->m_reconnectAttempts++;
         } else {
