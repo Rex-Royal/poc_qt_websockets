@@ -179,16 +179,13 @@ bool WebSocketBroker::stop()
     for (auto it = m_clients.begin(); it != m_clients.end(); ++it)
     {
         QWebSocket *socket = it.key();
+        socket->disconnect(); // Disconnect before closing to avoid signals being triggered after closure
         socket->close(QWebSocketProtocol::CloseCodeNormal, "Server shutting down");
     }
-
     // Clear client list
     m_clients.clear();
-
     // Close the server
     m_server->close();
-    qDebug().noquote() << "WebSocket Broker stopped";
-
     return true;
 }
 
@@ -260,6 +257,8 @@ void WebSocketBroker::onClientDisconnected()
                                   .arg(clientInfo.port)
                                   .arg(clientInfo.clientId);
 
+        // Disconnect all signals to avoid double slot execution
+        client->disconnect();
         // Remove client
         m_clients.remove(client);
         client->deleteLater();

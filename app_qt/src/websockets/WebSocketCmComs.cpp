@@ -9,7 +9,7 @@
 WebSocketCmComs::WebSocketCmComs(QObject *parent) : QObject(parent)
 {
     this->m_ws = new WebSocketPubSub(this); // ownership tied to this
-    connect(m_ws, &WebSocketPubSub::messageReceived, this, &WebSocketCmComs::onMessageReceived);
+    connect(this->m_ws, &WebSocketPubSub::messageReceived, this, &WebSocketCmComs::onMessageReceived);
 }
 
 WebSocketCmComs::~WebSocketCmComs()
