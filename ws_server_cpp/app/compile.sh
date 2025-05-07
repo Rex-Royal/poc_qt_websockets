@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-cd ..
 conan install . --output-folder=build --build=missing
 
 # Check if the build folder exists

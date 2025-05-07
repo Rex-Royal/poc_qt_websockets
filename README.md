@@ -73,9 +73,9 @@ To test SSL/NonSSL.
 
     ```bash
     cd ws_server_cpp
-    ./compile.sh && ./build/rr_ws_server -p 3002 --secure --cert ./ssl/server.crt --key ./ssl/server.key
+    ./app/compile.sh && ./build/rr_ws_server -p 3002 --secure --cert ./ssl/server.crt --key ./ssl/server.key
     # insecure
-    ./compile.sh && ./build/rr_ws_server -p 3002
+    ./app/compile.sh && ./build/rr_ws_server -p 3002
     ```
 
 2. Run `app_qt`
