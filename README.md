@@ -51,13 +51,15 @@ app_web/
 
 #### WEB Installation & Running
 
+Keep in mind that due to self-signed certification issues with the browser, the GUI only works with insecure websockets. To work with secure websockets we'd need to assing the certificate to a domain and execute the WebSocket server from there, pointing the `WebSocketConf.ts` URL to the proper domain address.
+
 1. Install NVM (Nove Version Manager); see [freeCodeCamp tutorial](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/).
 2. Install Node (using NVM)
 3. `cd ./app_web/`
 4. `npm install`
 5. `npm run dev`
 
-## SSL
+## SSL and non SSL
 
 ### ws_server_cpp
 
@@ -68,13 +70,17 @@ To test SSL.
     ```bash
     cd ws_server_cpp
     ./compile.sh && ./build/rr_ws_server -p 3002 --secure --cert ./ssl/server.crt --key ./ssl/server.key
+    # insecure
+    ./compile.sh && ./build/rr_ws_server -p 3002
     ```
 
 2. Run `app_qt`
 
     ```bash
     cd app_qt
-     ./compile.sh && ./build/app_qt -w wss://localhost:3002
+    ./compile.sh && ./build/app_qt -w wss://localhost:3002
+    # insecure
+    ./compile.sh && ./build/app_qt -w ws://localhost:3002
     ```
 
 3. If you have a true "let's encrypt" certificate on a proper domain, you can use the web server. If not, the web GUI will not work anymore. Here is how you test it:
