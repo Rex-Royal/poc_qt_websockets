@@ -56,3 +56,52 @@ app_web/
 3. `cd ./app_web/`
 4. `npm install`
 5. `npm run dev`
+
+## SSL
+
+### ws_server_cpp
+
+To test SSL.
+
+1. Run `rr_ws_server`
+
+    ```bash
+    cd ws_server_cpp
+    ./compile.sh && ./build/rr_ws_server -p 3002 --secure --cert ./ssl/server.crt --key ./ssl/server.key
+    ```
+
+2. Run `app_qt`
+
+    ```bash
+    cd app_qt
+     ./compile.sh && ./build/app_qt -w wss://localhost:3002
+    ```
+
+3. If you have a true "let's encrypt" certificate on a proper domain, you can use the web server. If not, the web GUI will not work anymore. Here is how you test it:
+
+    ```bash
+    git clone https://github.com/vi/websocat.git
+    cd websocat
+    cargo build --release
+    ./target/release/websocat wss://localhost:3002 --insecure
+    ## you should have seen this message:
+    {"action":"publish","payload":"Welcome! Your client ID is 29c89319","topic":"system"}
+
+    ## while running websocat, you can also publish messages, just copy past the following:
+    {"action":"SUBSCRIBE","topic":"CM_STATUS"}
+
+    ## It should output:
+    {"action":"subscribe","status":"success","topic":"CM_STATUS"}
+
+    ## Now, if you change the "STATUS" counter or hit the "CM_STATUS" button, you should receive the following:
+    {"action":"publish","payload":"3","timestamp":"2025-05-07T11:40:11","topic":"CM_STATUS"}
+    {"action":"publish","payload":"4","timestamp":"2025-05-07T11:40:12","topic":"CM_STATUS"}
+    {"action":"publish","payload":"5","timestamp":"2025-05-07T11:40:13","topic":"CM_STATUS"}
+
+    ## You can also send messages the GUI can send like:
+    {"action":"publish","topic":"GUI_READ_STATUS","payload":""}
+    {"action":"publish","topic":"GUI_READ_STATUS"}
+
+    ## Which will output
+    {"action":"publish","payload":"4","timestamp":"2025-05-07T11:50:20","topic":"CM_STATUS"}
+    ```

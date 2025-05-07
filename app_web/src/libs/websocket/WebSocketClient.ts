@@ -55,8 +55,12 @@ export class WebSocketClient {
       setTimeout(() => this.connect(), 1000); // Optional auto-reconnect
     };
 
-    this.socket.onerror = (err) => {
-      console.error("WebSocket error:", err);
+    this.socket.onerror = (event) => {
+      console.log("WebSocket error:", event);
+      if (event instanceof Event && event.target instanceof WebSocket) {
+        const ws = event.target as WebSocket;
+        console.log("WebSocket readyState:", ws.readyState); // 3 = CLOSED
+      }
     };
   }
 

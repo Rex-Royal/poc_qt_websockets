@@ -8,34 +8,47 @@
 #include <QNetworkInterface>
 #include <QtMath>
 #include <QRandomGenerator>
+#include <QSslCertificate>
+#include <QSslKey>
+#include <QFile>
+#include <QFileInfo>
 
 // Initialize static instance
 WebSocketBroker *WebSocketBroker::instance = nullptr;
 
-WebSocketBroker::WebSocketBroker(int port, QObject *parent)
+WebSocketBroker::WebSocketBroker(int port, bool secure, QObject *parent)
     : QObject(parent),
       m_server(new QWebSocketServer(QStringLiteral("WebSocket Broker"),
-                                    QWebSocketServer::NonSecureMode, this)),
+                                    secure ? QWebSocketServer::SecureMode : QWebSocketServer::NonSecureMode,
+                                    this)),
       m_healthCheckTimer(new QTimer(this)),
       m_recoveryTimer(new QTimer(this)),
       m_port(port),
       m_recoveryAttempts(0),
-      m_isRecovering(false)
+      m_isRecovering(false),
+      m_secure(secure)
 {
     // Setup health check timer (runs every 30 seconds)
     m_healthCheckTimer->setInterval(30000);
     connect(m_healthCheckTimer, &QTimer::timeout, this, &WebSocketBroker::performHealthCheck);
     m_healthCheckTimer->start();
 
+    if (m_secure)
+    {
+        // Connect SSL errors signal
+        connect(m_server, &QWebSocketServer::sslErrors,
+                this, &WebSocketBroker::onSslErrors);
+    }
+
     // Configure and start the server
     start();
 }
 
-WebSocketBroker *WebSocketBroker::getInstance(int port)
+WebSocketBroker *WebSocketBroker::getInstance(int port, bool secure)
 {
     if (!instance)
     {
-        instance = new WebSocketBroker(port);
+        instance = new WebSocketBroker(port, secure);
     }
     return instance;
 }
@@ -43,6 +56,78 @@ WebSocketBroker *WebSocketBroker::getInstance(int port)
 WebSocketBroker::~WebSocketBroker()
 {
     stop();
+}
+
+bool WebSocketBroker::configureSsl(const QString &certPath, const QString &keyPath)
+{
+    if (!m_secure)
+    {
+        qDebug().noquote() << "Server not in secure mode, ignoring SSL configuration";
+        return false;
+    }
+
+    // Check if certificate file exists
+    QFileInfo certInfo(certPath);
+    if (!certInfo.exists() || !certInfo.isReadable())
+    {
+        qDebug().noquote() << "SSL certificate file does not exist or is not readable:" << certPath;
+        return false;
+    }
+
+    // Check if key file exists
+    QFileInfo keyInfo(keyPath);
+    if (!keyInfo.exists() || !keyInfo.isReadable())
+    {
+        qDebug().noquote() << "SSL key file does not exist or is not readable:" << keyPath;
+        return false;
+    }
+
+    // Load certificate
+    QFile certFile(certPath);
+    if (!certFile.open(QIODevice::ReadOnly))
+    {
+        qDebug().noquote() << "Failed to open certificate file:" << certPath;
+        return false;
+    }
+
+    QSslCertificate certificate(&certFile, QSsl::Pem);
+    certFile.close();
+
+    if (certificate.isNull())
+    {
+        qDebug().noquote() << "Failed to load certificate from file:" << certPath;
+        return false;
+    }
+
+    // Load private key
+    QFile keyFile(keyPath);
+    if (!keyFile.open(QIODevice::ReadOnly))
+    {
+        qDebug().noquote() << "Failed to open key file:" << keyPath;
+        return false;
+    }
+
+    QSslKey sslKey(&keyFile, QSsl::Rsa, QSsl::Pem);
+    keyFile.close();
+
+    if (sslKey.isNull())
+    {
+        qDebug().noquote() << "Failed to load private key from file:" << keyPath;
+        return false;
+    }
+
+    // Create SSL configuration
+    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+    sslConfig.setLocalCertificate(certificate);
+    sslConfig.setPrivateKey(sslKey);
+    sslConfig.setProtocol(QSsl::TlsV1_2OrLater);
+
+    // Set the SSL configuration
+    m_sslConfiguration = sslConfig;
+    m_server->setSslConfiguration(m_sslConfiguration);
+
+    qDebug().noquote() << "SSL configuration completed successfully";
+    return true;
 }
 
 bool WebSocketBroker::start()
@@ -62,15 +147,18 @@ bool WebSocketBroker::start()
     bool success = m_server->listen(QHostAddress::Any, m_port);
     if (success)
     {
-        qDebug().noquote() << QString("✅ WebSocket Broker listening on ws://localhost:%1").arg(m_server->serverPort());
+        QString protocol = m_secure ? "wss" : "ws";
+        qDebug().noquote() << QString("✅ WebSocket Broker listening on %1://localhost:%2")
+                                  .arg(protocol)
+                                  .arg(m_server->serverPort());
         m_recoveryAttempts = 0;
         m_isRecovering = false;
     }
     else
     {
         qDebug().noquote() << QString("❌ Failed to start WebSocket Broker on port %1: %2")
-                        .arg(m_port)
-                        .arg(m_server->errorString());
+                                  .arg(m_port)
+                                  .arg(m_server->errorString());
         scheduleServerRecovery();
     }
 
@@ -104,6 +192,15 @@ bool WebSocketBroker::stop()
     return true;
 }
 
+void WebSocketBroker::onSslErrors(const QList<QSslError> &errors)
+{
+    qDebug().noquote() << "⚠️ SSL errors occurred:";
+    for (const QSslError &error : errors)
+    {
+        qDebug().noquote() << " - " << error.errorString();
+    }
+}
+
 void WebSocketBroker::onNewConnection()
 {
     QWebSocket *socket = m_server->nextPendingConnection();
@@ -124,9 +221,9 @@ void WebSocketBroker::onNewConnection()
             this, &WebSocketBroker::onClientDisconnected);
 
     qDebug().noquote() << QString("🔌 Client connected: %1:%2 (ID: %3)")
-                    .arg(clientInfo.address.toString())
-                    .arg(clientInfo.port)
-                    .arg(clientInfo.clientId);
+                              .arg(clientInfo.address.toString())
+                              .arg(clientInfo.port)
+                              .arg(clientInfo.clientId);
 
     // Send welcome message to client
     QJsonObject welcomeMsg;
@@ -134,18 +231,6 @@ void WebSocketBroker::onNewConnection()
     welcomeMsg["topic"] = "system";
     welcomeMsg["payload"] = QString("Welcome! Your client ID is %1").arg(clientInfo.clientId);
     socket->sendTextMessage(QJsonDocument(welcomeMsg).toJson(QJsonDocument::Compact));
-}
-
-QString getPrettyMessage(QString message)
-{
-    QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8(), &parseError);
-    QString prettyMessage;
-    if (!doc.isNull() && parseError.error == QJsonParseError::NoError)
-    {
-        return doc.toJson(QJsonDocument::Indented).trimmed(); // Pretty-print
-    }
-    return message; // Fallback to raw message if not valid JSON
 }
 
 void WebSocketBroker::onTextMessageReceived(const QString &message)
@@ -158,7 +243,7 @@ void WebSocketBroker::onTextMessageReceived(const QString &message)
                                   .arg(clientInfo.address.toString())
                                   .arg(clientInfo.port)
                                   .arg(clientInfo.clientId)
-                                  .arg(getPrettyMessage(message));
+                                  .arg(message);
 
         handleMessage(message, senderSocket);
     }
@@ -171,9 +256,9 @@ void WebSocketBroker::onClientDisconnected()
     {
         const ClientInfo &clientInfo = m_clients[client];
         qDebug().noquote() << QString("👋 Client disconnected: %1:%2 (ID: %3)")
-                        .arg(clientInfo.address.toString())
-                        .arg(clientInfo.port)
-                        .arg(clientInfo.clientId);
+                                  .arg(clientInfo.address.toString())
+                                  .arg(clientInfo.port)
+                                  .arg(clientInfo.clientId);
 
         // Remove client
         m_clients.remove(client);
@@ -184,8 +269,8 @@ void WebSocketBroker::onClientDisconnected()
 void WebSocketBroker::onServerError(QWebSocketProtocol::CloseCode closeCode)
 {
     qDebug().noquote() << QString("⚠️ WebSocket server error: %1 (code: %2)")
-                    .arg(m_server->errorString())
-                    .arg(closeCode);
+                              .arg(m_server->errorString())
+                              .arg(closeCode);
 
     // Try to recover
     scheduleServerRecovery();
@@ -248,8 +333,8 @@ void WebSocketBroker::scheduleServerRecovery()
     delay = qBound(1000, delay, maxDelay);
 
     qDebug().noquote() << QString("🔄 Scheduling server recovery attempt #%1 in %2 ms")
-                    .arg(m_recoveryAttempts + 1)
-                    .arg(delay);
+                              .arg(m_recoveryAttempts + 1)
+                              .arg(delay);
 
     // Stop any existing recovery timer
     if (m_recoveryTimer->isActive())
@@ -477,8 +562,8 @@ void WebSocketBroker::handleMessage(const QString &message, QWebSocket *client)
         m_clients[client].topics.remove(topic);
 
         qDebug().noquote() << QString("🙉 Client %1 unsubscribed from topic '%2'")
-                        .arg(m_clients[client].clientId)
-                        .arg(topic);
+                                  .arg(m_clients[client].clientId)
+                                  .arg(topic);
 
         // Send confirmation
         QJsonObject response;
@@ -491,14 +576,15 @@ void WebSocketBroker::handleMessage(const QString &message, QWebSocket *client)
 
     case WebSocketAction::PUBLISH:
     {
-        if (!jsonObj.contains("topic") || !jsonObj.contains("payload"))
+        // if (!jsonObj.contains("topic") || !jsonObj.contains("payload"))
+        if (!jsonObj.contains("topic"))
         {
-            qDebug().noquote() << "Publish message missing 'topic' or 'payload' field";
+            qDebug().noquote() << "Publish message missing mandatory 'topic' field";
             return;
         }
 
         QString topic = jsonObj["topic"].toString();
-        QString payload = jsonObj["payload"].toString();
+        QString payload = jsonObj["payload"].toString("");
 
         // Republish to all subscribers (excluding sender to avoid echo)
         publish(topic, payload, client);
@@ -507,13 +593,13 @@ void WebSocketBroker::handleMessage(const QString &message, QWebSocket *client)
 
     case WebSocketAction::BROADCAST:
     {
-        if (!jsonObj.contains("payload"))
+        if (!jsonObj.contains("topic"))
         {
-            qDebug().noquote() << "Broadcast message missing 'payload' field";
+            qDebug().noquote() << "Broadcast message missing mandatory 'topic' field";
             return;
         }
 
-        QString payload = jsonObj["payload"].toString();
+        QString payload = jsonObj["payload"].toString("");
 
         // Broadcast to all clients (excluding sender to avoid echo)
         broadcast(payload, client);

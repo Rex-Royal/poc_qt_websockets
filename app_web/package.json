@@ -6,10 +6,13 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "startssl": "local-ssl-proxy --source 3443 --target 3001 --cert ../ws_server_cpp/ssl/server.crt --key ../ws_server_cpp/ssl/server.key",
+    "testws": "node ws_script.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "local-ssl-proxy": "^2.0.5",
     "next": "15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

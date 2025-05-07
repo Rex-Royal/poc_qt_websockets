@@ -3,6 +3,8 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QCommandLineParser>
+#include <QCommandLineOption>
 
 #include "state/Atom.h"
 #include "state/DerivedAtom.h"
@@ -11,6 +13,27 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
+
+    // Parse command line arguments
+    QCommandLineParser parser;
+    parser.setApplicationDescription("QT GUI client to showcase WebScoket pub/sub messaging");
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    QCommandLineOption wsUrlOption(QStringList() << "w" << "websocket",
+                                   "WebSocket URL to connect to (default: ws://localhost:3001)",
+                                   "websocket", "ws://localhost:3001");
+    parser.addOption(wsUrlOption);
+
+    parser.process(app);
+
+    if (!parser.isSet(wsUrlOption))
+    {
+        qCritical() << "Client requires WS URL to be specified";
+        return 1;
+    }
+
+    QString wsUrl = parser.value(wsUrlOption);
 
     /**
      * TEST ATOM in pure cpp
@@ -56,6 +79,8 @@ int main(int argc, char *argv[])
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
 
     QQmlApplicationEngine engine;
+    // Make it accessible in QML as 'cppGreeting'
+    engine.rootContext()->setContextProperty("wsUrl", wsUrl);
     engine.load(url);
 
     return app.exec();

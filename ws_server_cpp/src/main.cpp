@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
     QCoreApplication::setApplicationName("WebSocketBroker");
-    QCoreApplication::setApplicationVersion("1.0.0");
+    QCoreApplication::setApplicationVersion("1.0.1");
 
     // Setup signal handling
     std::signal(SIGINT, signalHandler);
@@ -33,12 +33,46 @@ int main(int argc, char *argv[])
                                   "port", "3001");
     parser.addOption(portOption);
 
+    QCommandLineOption secureOption(QStringList() << "s" << "secure",
+                                    "Use secure WebSocket (WSS)");
+    parser.addOption(secureOption);
+
+    QCommandLineOption certOption(QStringList() << "c" << "cert",
+                                  "Path to SSL certificate file (PEM format)",
+                                  "certificate");
+    parser.addOption(certOption);
+
+    QCommandLineOption keyOption(QStringList() << "k" << "key",
+                                 "Path to SSL private key file (PEM format)",
+                                 "key");
+    parser.addOption(keyOption);
+
     parser.process(app);
 
     int port = parser.value(portOption).toInt();
+    bool secure = parser.isSet(secureOption);
 
     // Get broker instance
-    WebSocketBroker *broker = WebSocketBroker::getInstance(port);
+    WebSocketBroker *broker = WebSocketBroker::getInstance(port, secure);
+
+    // Configure SSL if needed
+    if (secure)
+    {
+        if (!parser.isSet(certOption) || !parser.isSet(keyOption))
+        {
+            qCritical() << "Secure mode requires both certificate and key files!";
+            return 1;
+        }
+
+        QString certPath = parser.value(certOption);
+        QString keyPath = parser.value(keyOption);
+
+        if (!broker->configureSsl(certPath, keyPath))
+        {
+            qCritical() << "Failed to configure SSL. Please check certificate and key files.";
+            return 1;
+        }
+    }
 
     // Check if broker started successfully
     if (!broker->isRunning())

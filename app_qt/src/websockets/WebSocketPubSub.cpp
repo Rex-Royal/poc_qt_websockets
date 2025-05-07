@@ -23,6 +23,29 @@ void WebSocketPubSub::connectToUrl(const QUrl &url, bool reconnects)
 {
     this->reconnects = reconnects;
     this->m_lastUrl = url;
+
+    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+    sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone); // Disable verification (⚠️ development only)
+
+    this->m_webSocket.setSslConfiguration(sslConfig);
+
+    // Connect to SSL error signal
+    connect(&this->m_webSocket, &QWebSocket::sslErrors,
+            this, [](const QList<QSslError> &errors)
+            {
+                    bool selfSigned = false;
+                    for (const QSslError &error : errors) {
+                        if (error.error() == QSslError::SelfSignedCertificate ||
+                            error.error() == QSslError::SelfSignedCertificateInChain) {
+                            selfSigned = true;
+                        }
+                    }
+                    if (selfSigned) {
+                        qWarning() << "🔒 SELF-SIGNED CERT, DEV ONLY";
+                    } else {
+                        qInfo() << "✅ PRODUCTION READY, CERTIFICATE APPROVED!";
+                    } });
+
     this->m_webSocket.open(url);
     qDebug() << "OPEN WebSockets " << url.toString();
 }

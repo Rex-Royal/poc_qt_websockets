@@ -56,7 +56,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         webSocketCmComs.setStatusObserver(cm_status_obs)
-        webSocketCmComs.start("ws://localhost:3002");  // connect to WebSocket server
+        webSocketCmComs.start(wsUrl);  // connect to WebSocket server
         subscriptionDelay.start();
     }
 

@@ -10,6 +10,10 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QHostAddress>
+#include <QSslConfiguration>
+#include <QSslCertificate>
+#include <QSslKey>
+#include <QFile>
 
 enum class WebSocketAction
 {
@@ -24,7 +28,7 @@ class WebSocketBroker : public QObject
     Q_OBJECT
 
 public:
-    static WebSocketBroker *getInstance(int port = 3001);
+    static WebSocketBroker *getInstance(int port = 3001, bool secure = false);
     virtual ~WebSocketBroker();
 
     // Publish a message to all clients subscribed to a topic
@@ -43,8 +47,11 @@ public:
     // Get current server port
     int serverPort() const;
 
+    // SSL configuration
+    bool configureSsl(const QString &certPath, const QString &keyPath);
+
 private:
-    explicit WebSocketBroker(int port = 3001, QObject *parent = nullptr);
+    explicit WebSocketBroker(int port = 3001, bool secure = false, QObject *parent = nullptr);
     static WebSocketBroker *instance;
 
     struct ClientInfo
@@ -62,6 +69,8 @@ private:
     int m_port;
     int m_recoveryAttempts;
     bool m_isRecovering;
+    bool m_secure;
+    QSslConfiguration m_sslConfiguration;
 
     // Helper methods
     QString actionToString(WebSocketAction action);
@@ -75,6 +84,7 @@ private slots:
     void onTextMessageReceived(const QString &message);
     void onClientDisconnected();
     void onServerError(QWebSocketProtocol::CloseCode closeCode);
+    void onSslErrors(const QList<QSslError> &errors);
     void performHealthCheck();
     void attemptServerRecovery();
 };
