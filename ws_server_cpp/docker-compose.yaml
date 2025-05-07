@@ -1,0 +1,19 @@
+services:
+  ws_server_cpp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    environment:
+      - QT_LOGGING_TO_CONSOLE=1
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost:3002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

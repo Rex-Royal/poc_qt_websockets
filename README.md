@@ -61,9 +61,13 @@ Keep in mind that due to self-signed certification issues with the browser, the 
 
 ## SSL and non SSL
 
+1. `cd ws_server_cpp`
+2. `./start.sh`
+3. `./stop.sh`
+
 ### ws_server_cpp
 
-To test SSL.
+To test SSL/NonSSL.
 
 1. Run `rr_ws_server`
 
