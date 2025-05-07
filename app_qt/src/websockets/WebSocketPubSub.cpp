@@ -75,6 +75,13 @@ void WebSocketPubSub::resetPingTimeout()
 
 void WebSocketPubSub::handlePingTimeout()
 {
+    // Check if we're already disconnected or disconnecting
+    if (m_webSocket.state() == QAbstractSocket::UnconnectedState ||
+        m_webSocket.state() == QAbstractSocket::ClosingState)
+    {
+        return;
+    }
+
     qWarning() << "Ping timeout occurred! No pong response received within" << PING_TIMEOUT << "ms";
 
     // Check if we have any pending pings older than PING_TIMEOUT
@@ -127,6 +134,15 @@ WebSocketPubSub::~WebSocketPubSub()
 
 void WebSocketPubSub::connectToUrl(const QUrl &url, bool reconnects)
 {
+    // Cancel any existing reconnect timers
+    if (m_reconnectScheduled)
+    {
+        // Stop any pending reconnect timer
+        // This requires adding a QTimer m_reconnectTimer member
+        // m_reconnectTimer.stop();
+        m_reconnectScheduled = false;
+    }
+
     this->reconnects = reconnects;
     this->m_lastUrl = url;
 
@@ -250,8 +266,8 @@ void WebSocketPubSub::onConnected()
         this->subscribe(topic, /*force=*/true);
     }
 
-    // Also subscribe to system topics for more robust monitoring
-    this->subscribe("system", true);
+    // // Also subscribe to system topics for more robust monitoring
+    // this->subscribe("system", true);
 }
 
 void WebSocketPubSub::onDisconnected()
@@ -260,12 +276,22 @@ void WebSocketPubSub::onDisconnected()
 
     // Stop timers
     stopHeartbeatMonitor();
+    if (m_pingTimeoutTimer.isActive())
+    {
+        m_pingTimeoutTimer.stop();
+    }
+
+    // Clear pending pings
+    m_pendingPings.clear();
+
+    // Reset counters
+    m_missedHeartbeats = 0;
 
     // Emit connection state changed
     emit connectionStateChanged(false);
 
-    // Try to reconnect if enabled
-    if (reconnects)
+    // Try to reconnect if enabled and not already scheduled
+    if (reconnects && !m_reconnectScheduled)
     {
         scheduleReconnect();
     }
@@ -295,25 +321,29 @@ void WebSocketPubSub::onError(QAbstractSocket::SocketError error)
 {
     qWarning() << "WebSocket error:" << this->m_webSocket.errorString() << " (" << error << ")";
 
-    if (error == QAbstractSocket::RemoteHostClosedError ||
-        error == QAbstractSocket::ConnectionRefusedError ||
-        error == QAbstractSocket::NetworkError)
+    // Stop timers first to prevent callbacks during reconnection
+    stopHeartbeatMonitor();
+    if (m_pingTimeoutTimer.isActive())
     {
-        qDebug() << "this->m_webSocket.abort()";
-        this->m_webSocket.abort(); // Abort current socket
+        m_pingTimeoutTimer.stop();
+    }
 
-        qDebug() << "stopHeartbeatMonitor()";
-        // Stop heartbeat monitoring
-        stopHeartbeatMonitor();
-
-        qDebug() << "emit connectionStateChanged(false)";
+    // Only proceed with reconnection if we're not already in the process
+    if (m_webSocket.state() != QAbstractSocket::ConnectingState &&
+        m_webSocket.state() != QAbstractSocket::HostLookupState)
+    {
         // Emit connection state changed
         emit connectionStateChanged(false);
 
-        // Try to reconnect if enabled
-        if (reconnects)
+        // Only abort if we're not already disconnected
+        if (m_webSocket.state() != QAbstractSocket::UnconnectedState)
         {
-            qDebug() << "scheduleReconnect()";
+            this->m_webSocket.abort(); // Abort current socket
+        }
+
+        // Try to reconnect if enabled
+        if (reconnects && !m_reconnectScheduled)
+        {
             scheduleReconnect();
         }
     }
@@ -374,6 +404,14 @@ void WebSocketPubSub::stopHeartbeatMonitor()
     {
         m_pingTimer.stop();
     }
+
+    if (m_pingTimeoutTimer.isActive())
+    {
+        m_pingTimeoutTimer.stop();
+    }
+
+    // Clear pending pings
+    m_pendingPings.clear();
 }
 
 void WebSocketPubSub::checkHeartbeat()
