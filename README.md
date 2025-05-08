@@ -82,9 +82,7 @@ ws_server_app/
 └── ...
 ```
 
-
-
-## WebSocket Server (allows SSL and non SSL)
+#### WebSocket Server Installation & Running
 
 1. `cd ws_server_cpp`
 2. `./start.sh`
