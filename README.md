@@ -1,6 +1,15 @@
 # PoC QT WebSockets
 
-Proof of Concept between a QT5.13.2 project and WebSockets
+Proof of Concept between a QT5.13.2 project and a Web GUI using a simple standalone WebSockets Server.
+
+![Diagram](./docs/flowchart_diagram_of_poc_optimized.png)
+
+## Prerequisites
+
+1. Docker (for easy WebSockets server deployment). See how to install in [get-started](https://www.docker.com/get-started/)
+2. Conan (easier c++ package management). See [conan 2 installation](https://docs.conan.io/2/installation.html)
+3. Install NVM (Node Version Manager); see [freeCodeCamp tutorial](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/).
+4. Install Node (using NVM)
 
 ## Project structure
 
@@ -30,13 +39,14 @@ app_qt/
 
 #### QT Installation & Running
 
-1. `./app_qt/install.sh`
-2. `./app_qt/compile.sh`
-3. `./app_qt/build/app_qt`
+1. `cd app_qt`
+2. `./install.sh`
+3. `./compile.sh`
+4. `./build/app_qt`
 
-### PROJECT: WEB Server
+### PROJECT: WEB Server/Client
 
-The Web Server to showcase how to communicate publish/subscribe to WS.
+The Web Server to showcase how to communicate publish/subscribe to the Rex-Royal Websocket Server
 
 ```bash
 app_web/
@@ -51,23 +61,37 @@ app_web/
 
 #### WEB Installation & Running
 
-Keep in mind that due to self-signed certification issues with the browser, the GUI only works with insecure websockets. To work with secure websockets we'd need to assing the certificate to a domain and execute the WebSocket server from there, pointing the `WebSocketConf.ts` URL to the proper domain address.
+Keep in mind that due to self-signed certification issues with the browser, the GUI only works with insecure websockets. To use secure WebSockets (wss), you need to assign a valid certificate to a domain and run the WebSocket server from there, updating the WebSocketConf.ts URL to point to that domain.
 
-1. Install NVM (Nove Version Manager); see [freeCodeCamp tutorial](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/).
-2. Install Node (using NVM)
-3. `cd ./app_web/`
-4. `npm install`
-5. `npm run dev`
+1. `cd app_web`
+2. `npm install`
+3. `npm run dev`
 
-## SSL and non SSL
+### PROJECT: Rex-Royal WebSocket Server
+
+The WebSocket Server acts as a broker between all parties (Web GUI and QT Gui)
+
+```bash
+ws_server_cpp/
+├── app/
+│   └── docker specific files and certificate (self-signed) generation
+├── src/
+│   └── code base
+├── .env # specifies if server will be `ws` or `wss`
+├── Dockerfile
+├── docker-compose.yaml
+├── start.sh # starts docker service
+├── stop.sh # stops docker service
+└── ...
+```
+
+#### WebSocket Server Installation & Running
 
 1. `cd ws_server_cpp`
 2. `./start.sh`
 3. `./stop.sh`
 
-### ws_server_cpp
-
-To test SSL/NonSSL.
+## Tying everything together (and testing SSL/NonSSL)
 
 1. Run `rr_ws_server`
 
@@ -87,7 +111,7 @@ To test SSL/NonSSL.
     ./compile.sh && ./build/app_qt -w ws://localhost:3002
     ```
 
-3. If you have a true "let's encrypt" certificate on a proper domain, you can use the web server. If not, the web GUI will not work anymore. Here is how you test it:
+3. If you have a true "let's encrypt" certificate on a proper domain, you can use the web server. If not, the web GUI will not work anymore. Here is how you test it using websocat, a [Rust project](https://www.rust-lang.org/tools/install):
 
     ```bash
     git clone https://github.com/vi/websocat.git
