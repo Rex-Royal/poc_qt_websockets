@@ -2,6 +2,13 @@
 
 Proof of Concept between a QT5.13.2 project and WebSockets
 
+## Pre-requisits
+
+1. Docker (for easy WebSockets server deployment). See how to install in [get-started](https://www.docker.com/get-started/)
+2. Conan (easier c++ package management). See [conan 2 installation](https://docs.conan.io/2/installation.html)
+3. Install NVM (Nove Version Manager); see [freeCodeCamp tutorial](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/).
+4. Install Node (using NVM)
+
 ## Project structure
 
 ### PROJECT: QT Hello World
@@ -34,9 +41,9 @@ app_qt/
 2. `./app_qt/compile.sh`
 3. `./app_qt/build/app_qt`
 
-### PROJECT: WEB Server
+### PROJECT: WEB Server/Client
 
-The Web Server to showcase how to communicate publish/subscribe to WS.
+The Web Server to showcase how to communicate publish/subscribe to the Rex-Royal Websocket Server
 
 ```bash
 app_web/
@@ -53,21 +60,37 @@ app_web/
 
 Keep in mind that due to self-signed certification issues with the browser, the GUI only works with insecure websockets. To work with secure websockets we'd need to assing the certificate to a domain and execute the WebSocket server from there, pointing the `WebSocketConf.ts` URL to the proper domain address.
 
-1. Install NVM (Nove Version Manager); see [freeCodeCamp tutorial](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/).
-2. Install Node (using NVM)
-3. `cd ./app_web/`
-4. `npm install`
-5. `npm run dev`
+1. `cd ./app_web/`
+2. `npm install`
+3. `npm run dev`
 
-## SSL and non SSL
+### PROJECT: Rex-Royal WebSocket Server
+
+The WebSocket Server acts as a broker between all parties (Web GUI and QT Gui)
+
+```bash
+ws_server_app/
+├── app/
+│   └── docker specific files and certificate (self-signed) generation
+├── src/
+│   └── code base
+├── .env # specifies if server will be `ws` or `wss`
+├── Dockerfile
+├── docker-compose.yaml
+├── start.sh # starts docker service
+├── stop.sh # stops docker service
+└── ...
+```
+
+
+
+## WebSocket Server (allows SSL and non SSL)
 
 1. `cd ws_server_cpp`
 2. `./start.sh`
 3. `./stop.sh`
 
-### ws_server_cpp
-
-To test SSL/NonSSL.
+## Tying everything together (and testing SSL/NonSSL)
 
 1. Run `rr_ws_server`
 
