@@ -1,6 +1,6 @@
 # PoC QT WebSockets
 
-Proof of Concept between a QT5.13.2 project and WebSockets
+Proof of Concept between a QT5.13.2 project and a Web GUI using a simple standalone WebSockets Server.
 
 ![Diagram](./docs/flowchart_diagram_of_poc.png)
 
