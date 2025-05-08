@@ -2,11 +2,13 @@
 
 Proof of Concept between a QT5.13.2 project and WebSockets
 
-## Pre-requisits
+![Diagram](./docs/flowchart_diagram_of_poc.png)
+
+## Prerequisites
 
 1. Docker (for easy WebSockets server deployment). See how to install in [get-started](https://www.docker.com/get-started/)
 2. Conan (easier c++ package management). See [conan 2 installation](https://docs.conan.io/2/installation.html)
-3. Install NVM (Nove Version Manager); see [freeCodeCamp tutorial](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/).
+3. Install NVM (Node Version Manager); see [freeCodeCamp tutorial](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/).
 4. Install Node (using NVM)
 
 ## Project structure
@@ -37,9 +39,10 @@ app_qt/
 
 #### QT Installation & Running
 
-1. `./app_qt/install.sh`
-2. `./app_qt/compile.sh`
-3. `./app_qt/build/app_qt`
+1. `cd app_qt`
+2. `./install.sh`
+3. `./compile.sh`
+4. `./build/app_qt`
 
 ### PROJECT: WEB Server/Client
 
@@ -58,9 +61,9 @@ app_web/
 
 #### WEB Installation & Running
 
-Keep in mind that due to self-signed certification issues with the browser, the GUI only works with insecure websockets. To work with secure websockets we'd need to assing the certificate to a domain and execute the WebSocket server from there, pointing the `WebSocketConf.ts` URL to the proper domain address.
+Keep in mind that due to self-signed certification issues with the browser, the GUI only works with insecure websockets. To use secure WebSockets (wss), you need to assign a valid certificate to a domain and run the WebSocket server from there, updating the WebSocketConf.ts URL to point to that domain.
 
-1. `cd ./app_web/`
+1. `cd app_web`
 2. `npm install`
 3. `npm run dev`
 
@@ -69,7 +72,7 @@ Keep in mind that due to self-signed certification issues with the browser, the 
 The WebSocket Server acts as a broker between all parties (Web GUI and QT Gui)
 
 ```bash
-ws_server_app/
+ws_server_cpp/
 ├── app/
 │   └── docker specific files and certificate (self-signed) generation
 ├── src/
@@ -108,7 +111,7 @@ ws_server_app/
     ./compile.sh && ./build/app_qt -w ws://localhost:3002
     ```
 
-3. If you have a true "let's encrypt" certificate on a proper domain, you can use the web server. If not, the web GUI will not work anymore. Here is how you test it:
+3. If you have a true "let's encrypt" certificate on a proper domain, you can use the web server. If not, the web GUI will not work anymore. Here is how you test it using websocat, a [Rust project](https://www.rust-lang.org/tools/install):
 
     ```bash
     git clone https://github.com/vi/websocat.git
