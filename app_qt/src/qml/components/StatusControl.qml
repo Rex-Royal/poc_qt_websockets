@@ -1,6 +1,6 @@
 // StatusControl.qml
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick 2.14
+import QtQuick.Controls 2.14
 
 Item {
     property var status: null // status property to be passed from parent
