@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "./Button";
 import { Dropdown } from "./Dropdown";
 
-type MessageCommandType = "StartCleaning" | "TresterEmptied" | "BeansFilled";
+type MessageCommandType = "CMD_START_CLEANING" | "CMD_CONFIRM_USERMSG" | "CMD_TBD_BY_USER";
 type MessageData = "cancel" | "ok";
 
 export const GuiCommands = () => {
@@ -18,7 +18,7 @@ export const GuiCommands = () => {
    * GUI_READ_STATUS - empty
    * GUI_PRODUCT_START - pid
    * GUI_PRODUCT_STOP - empty
-   * GUI_MSG_COMMAND - { type: StartCleaning | TresterEmptied | BeansFilled, data: "cancel" | "ok" }
+   * GUI_MSG_COMMAND - { type: CMD_START_CLEANING | CMD_CONFIRM_USERMSG | CMD_TBD_BY_USER, data: "cancel" | "ok" }
    */
   const getStatus = () => ws && ws.publish(WebSocketTopic.GUI_READ_STATUS, "");
 
@@ -69,7 +69,7 @@ export const GuiCommands = () => {
         id="commandType"
         label="Select Command Type"
         value={commandType}
-        options={["StartCleaning", "TresterEmptied", "BeansFilled"]}
+        options={["CMD_START_CLEANING", "CMD_CONFIRM_USERMSG", "CMD_TBD_BY_USER"]}
         onChange={setCommandType}
       />
       <Dropdown<MessageData>
