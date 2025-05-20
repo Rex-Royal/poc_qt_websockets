@@ -3,7 +3,9 @@
 
 #TARGET = ws_server_cpp
 
-QT = core gui widgets
+QT = core gui widgets websockets
+
+CONFIG += console
 
 HEADERS = \
    $$PWD/websockets/WebSocketBroker.h
